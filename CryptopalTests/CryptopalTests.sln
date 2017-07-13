@@ -3,9 +3,7 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 15
 VisualStudioVersion = 15.0.26430.4
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Cryptopals", "Cryptopals\Cryptopals.csproj", "{283EECA2-3049-4763-8170-419AE96393DC}"
-EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CryptopalTests", "..\CryptopalTests\CryptopalTests\CryptopalTests.csproj", "{D6F3E183-6B42-44AB-ABE2-DD688867EDC1}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CryptopalTests", "CryptopalTests\CryptopalTests.csproj", "{D6F3E183-6B42-44AB-ABE2-DD688867EDC1}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -13,10 +11,6 @@ Global
 		Release|Any CPU = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
-		{283EECA2-3049-4763-8170-419AE96393DC}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{283EECA2-3049-4763-8170-419AE96393DC}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{283EECA2-3049-4763-8170-419AE96393DC}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{283EECA2-3049-4763-8170-419AE96393DC}.Release|Any CPU.Build.0 = Release|Any CPU
 		{D6F3E183-6B42-44AB-ABE2-DD688867EDC1}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{D6F3E183-6B42-44AB-ABE2-DD688867EDC1}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{D6F3E183-6B42-44AB-ABE2-DD688867EDC1}.Release|Any CPU.ActiveCfg = Release|Any CPU
