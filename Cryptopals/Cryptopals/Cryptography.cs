@@ -32,8 +32,8 @@ namespace Cryptopals
       foreach (char letter in alphabet)
       {
         characterString = new string(letter, encryptedString.Length / 2);
-        byte[] test3 = this.XORBuffer(encryptedString, this.JoinArrayToString(Encoding.ASCII.GetBytes(characterString)));
-        string decoded = Encoding.ASCII.GetString(test3);
+        byte[] xorBytes = this.XORBuffer(encryptedString, this.JoinArrayToString(Encoding.ASCII.GetBytes(characterString)));
+        string decoded = Encoding.ASCII.GetString(xorBytes);
         Dictionary<char, int> scored = this.ScoreFrequency(decoded);
 
         if (mostFrequent == null || (mostFrequent != null && this.CompareFrequencies(scored, mostFrequent)))
@@ -104,7 +104,7 @@ namespace Cryptopals
     /// </summary>
     /// <param name="input">The string input</param>
     /// <returns>A Dictionary showing the frequencies of the most common letters</returns>
-    public Dictionary<char, int> ScoreFrequency(string input)
+    private Dictionary<char, int> ScoreFrequency(string input)
     {
       Dictionary<char, int> frequency = new Dictionary<char, int>();
       foreach (char character in Cryptography.MOST_COMMON_LETTERS)
@@ -126,7 +126,7 @@ namespace Cryptopals
     /// <param name="newInput">The new dictionary</param>
     /// <param name="mostFrequent">The currently most frequent dictionary</param>
     /// <returns></returns>
-    public bool CompareFrequencies(Dictionary<char, int> newInput, Dictionary<char, int> mostFrequent)
+    private bool CompareFrequencies(Dictionary<char, int> newInput, Dictionary<char, int> mostFrequent)
     {
       int inputTotal = 0, leadingTotal = 0;
       foreach(char letter in Cryptography.MOST_COMMON_LETTERS)

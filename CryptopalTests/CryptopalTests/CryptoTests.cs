@@ -48,5 +48,12 @@ namespace CryptopalTests
       string result = this.crypto.DecodeSingleByteXOR(inputString);
       Assert.AreEqual(expectedString, result);
     }
+
+    [TestCategory("SetOne")]
+    [TestMethod]
+    public void SetOneChallengeFour()
+    {
+
+    }
   }
 }
