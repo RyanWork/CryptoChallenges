@@ -2,6 +2,10 @@
 using Cryptopals.Exceptions;
 using System.Text;
 using System.Collections.Generic;
+using System.Collections.Specialized;
+using System.IO;
+using System.Threading;
+using System.Linq;
 
 namespace Cryptopals
 {
@@ -10,12 +14,42 @@ namespace Cryptopals
     /// <summary>
     /// Most common letters in English alphabet
     /// </summary>
-    private const string MOST_COMMON_LETTERS = "ETAOIN SHRDLU";
+    private const string MOST_COMMON_LETTERS = "ETAOIN";
+
+    /// <summary>
+    /// Least common letters in English alphabet
+    /// </summary>
+    private const string LEAST_COMMON_LETTERS = "VKJXQZ";
 
     static void Main(string[] args)
     {
       Cryptography crypto = new Cryptography();
+      string inputString = "1b37373331363f78151b7f2b783431333d78397828372d363c78373e783a393b3736";
+      string expectedString = "Cooking MC's like a pound of bacon";
+      string result = crypto.DecodeSingleByteXOR(inputString);
 
+      Console.WriteLine(crypto.DecodeSingleByteXOR(inputString));
+      Console.ReadKey();
+
+      string[] array = File.ReadAllLines(@"C:\Users\rha\Desktop\Encryption\CryptoChallenges\Cryptopals\Cryptopals\Challenge4Text.txt");
+      string best = string.Empty;
+      int bestInput = 0;
+      foreach (string line in array)
+      {
+        string returnVal = crypto.DecodeSingleByteXOR(line);
+        Console.WriteLine(returnVal);
+        Thread.Sleep(25);
+        //int input = crypto.GetFrequencyScore(returnVal);
+
+        //if (input > bestInput)
+        //{
+        //  bestInput = input;
+        //  best = returnVal;
+        //}
+      }
+
+      //Console.WriteLine(best + bestInput);
+      Console.ReadKey();
     }
 
     /// <summary>
@@ -27,18 +61,18 @@ namespace Cryptopals
     {
       char[] alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZ".ToCharArray();
       string characterString = string.Empty;
-      Dictionary<char, int> mostFrequent = null;
       string associatedString = string.Empty;
+      int highestScore = 0;
       foreach (char letter in alphabet)
       {
         characterString = new string(letter, encryptedString.Length / 2);
         byte[] xorBytes = this.XORBuffer(encryptedString, this.JoinArrayToString(Encoding.ASCII.GetBytes(characterString)));
         string decoded = Encoding.ASCII.GetString(xorBytes);
-        Dictionary<char, int> scored = this.ScoreFrequency(decoded);
+        int scored = this.GetFrequencyScore(decoded);
 
-        if (mostFrequent == null || (mostFrequent != null && this.CompareFrequencies(scored, mostFrequent)))
+        if (scored > highestScore)
         {
-          mostFrequent = scored;
+          highestScore = scored;
           associatedString = decoded;
         }
       }
@@ -46,12 +80,17 @@ namespace Cryptopals
       return associatedString;
     }
 
+    public string DecodeSingleByteXORFile(string filePath)
+    {
+      return string.Empty;
+    }
+
     /// <summary>
     /// Parses a byte array into a string
     /// </summary>
     /// <param name="array">The byte array to convert</param>
     /// <returns>A string representation of the array</returns>
-    public string JoinArrayToString(byte[] array) 
+    public string JoinArrayToString(byte[] array)
     {
       StringBuilder joinedString = new StringBuilder();
       for (int i = 0; i < array.Length; i++)
@@ -100,42 +139,71 @@ namespace Cryptopals
     }
 
     /// <summary>
-    /// Return a dictionary showing the most frequent characters
+    /// Scores the value of a string. The higher the score, the better.
     /// </summary>
-    /// <param name="input">The string input</param>
-    /// <returns>A Dictionary showing the frequencies of the most common letters</returns>
-    private Dictionary<char, int> ScoreFrequency(string input)
+    /// <param name="input">The string to evaluate</param>
+    /// <returns>an integer representing the frequency score of the string</returns>
+    private int GetFrequencyScore(string input)
     {
+      //Dictionary<char, int> frequencyCommon = new Dictionary<char, int>(), frequencyUncommon = new Dictionary<char, int>();
+      //int frequencyScore = 0;
+      //foreach (char character in Cryptography.MOST_COMMON_LETTERS)
+      //  frequencyCommon.Add(character, 0);
+
+      //foreach (char character in Cryptography.LEAST_COMMON_LETTERS)
+      //  frequencyUncommon.Add(character, 0);
+
+      //foreach (char letter in input)
+      //{
+      //  char letterFormatted = Char.ToUpper(letter);
+      //  if (frequencyCommon.ContainsKey(letterFormatted))
+      //  {
+      //    // Score the frequency of "ETAOIN"
+      //    frequencyCommon[letterFormatted]++;
+      //    frequencyScore++;
+      //  }
+      //  else if (frequencyUncommon.ContainsKey(letterFormatted))
+      //  {
+      //    // Remove score if the program finds the most uncommon letters
+      //    frequencyUncommon[letterFormatted]++;
+      //    frequencyScore--;
+      //  }
+      //}
+
       Dictionary<char, int> frequency = new Dictionary<char, int>();
-      foreach (char character in Cryptography.MOST_COMMON_LETTERS)
-        frequency.Add(character, 0);
+      //foreach (char character in Cryptography.MOST_COMMON_LETTERS)
+      //  frequency.Add(character, 0);
 
-      // Score the frequency of "ETAOIN SHRDLU"
-      foreach(char letter in input)
+      //foreach (char character in Cryptography.LEAST_COMMON_LETTERS)
+      //  frequency.Add(character, 0);
+
+      foreach (char letter in input)
       {
-        if (frequency.ContainsKey(letter))
-          frequency[letter]++;
+        char letterFormatted = Char.ToUpper(letter);
+        if (!frequency.ContainsKey(letterFormatted))
+          frequency.Add(letterFormatted, 0);
+
+        frequency[letterFormatted]++;
       }
 
-      return frequency;
-    }
+      List<KeyValuePair<char, int>> list = frequency.ToList();
+      list.Sort((x, y) => y.Value.CompareTo(x.Value));
 
-    /// <summary>
-    /// Compare the dictionaries that count the frequency of ETAOIN SHRDLU
-    /// </summary>
-    /// <param name="newInput">The new dictionary</param>
-    /// <param name="mostFrequent">The currently most frequent dictionary</param>
-    /// <returns></returns>
-    private bool CompareFrequencies(Dictionary<char, int> newInput, Dictionary<char, int> mostFrequent)
-    {
-      int inputTotal = 0, leadingTotal = 0;
-      foreach(char letter in Cryptography.MOST_COMMON_LETTERS)
-      {
-        inputTotal += newInput[letter];
-        leadingTotal += mostFrequent[letter];
-      }
-      
-      return inputTotal > leadingTotal;
+      char[] common = { 'E', 'T', 'A', 'O', 'I', 'N', ' ' };
+      char[] least = { 'V', 'K', 'J', 'Q', 'Z' };
+      int frequencyScore = 0;
+
+      List<KeyValuePair<char, int>> TopFive = list.GetRange(0, 5);
+      List<KeyValuePair<char, int>> LastFive = list.GetRange(list.Count - 5, 5);
+
+      foreach (KeyValuePair<char, int> kvp in TopFive)
+        if (common.Contains(kvp.Key))
+          frequencyScore++;
+
+      foreach(KeyValuePair<char, int> kvp in LastFive)
+        if(common.Contains(kvp.Key))
+
+      return frequencyScore;
     }
   }
 }
