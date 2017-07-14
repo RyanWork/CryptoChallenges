@@ -38,5 +38,15 @@ namespace CryptopalTests
 
       Assert.AreEqual(expectedString, result);
     }
+
+    [TestCategory("SetOne")]
+    [TestMethod]
+    public void SetOneChallengeThree()
+    {
+      string inputString = "1b37373331363f78151b7f2b783431333d78397828372d363c78373e783a393b3736";
+      string expectedString = "Cooking MC's like a pound of bacon";
+      string result = this.crypto.DecodeSingleByteXOR(inputString);
+      Assert.AreEqual(expectedString, result);
+    }
   }
 }

@@ -1,16 +1,56 @@
 ﻿using System;
 using Cryptopals.Exceptions;
 using System.Text;
+using System.Collections.Generic;
 
 namespace Cryptopals
 {
   public class Cryptography
   {
+    /// <summary>
+    /// Most common letters in English alphabet
+    /// </summary>
+    private const string MOST_COMMON_LETTERS = "ETAOIN SHRDLU";
+
     static void Main(string[] args)
     {
+      Cryptography crypto = new Cryptography();
 
     }
 
+    /// <summary>
+    /// Decode a string encrypted via a single character
+    /// </summary>
+    /// <param name="encryptedString"></param>
+    /// <returns></returns>
+    public string DecodeSingleByteXOR(string encryptedString)
+    {
+      char[] alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZ".ToCharArray();
+      string characterString = string.Empty;
+      Dictionary<char, int> mostFrequent = null;
+      string associatedString = string.Empty;
+      foreach (char letter in alphabet)
+      {
+        characterString = new string(letter, encryptedString.Length / 2);
+        byte[] test3 = this.XORBuffer(encryptedString, this.JoinArrayToString(Encoding.ASCII.GetBytes(characterString)));
+        string decoded = Encoding.ASCII.GetString(test3);
+        Dictionary<char, int> scored = this.ScoreFrequency(decoded);
+
+        if (mostFrequent == null || (mostFrequent != null && this.CompareFrequencies(scored, mostFrequent)))
+        {
+          mostFrequent = scored;
+          associatedString = decoded;
+        }
+      }
+
+      return associatedString;
+    }
+
+    /// <summary>
+    /// Parses a byte array into a string
+    /// </summary>
+    /// <param name="array">The byte array to convert</param>
+    /// <returns>A string representation of the array</returns>
     public string JoinArrayToString(byte[] array) 
     {
       StringBuilder joinedString = new StringBuilder();
@@ -57,6 +97,45 @@ namespace Cryptopals
         resultXOR[i] = (byte)(input1[i] ^ input2[i]);
 
       return resultXOR;
+    }
+
+    /// <summary>
+    /// Return a dictionary showing the most frequent characters
+    /// </summary>
+    /// <param name="input">The string input</param>
+    /// <returns>A Dictionary showing the frequencies of the most common letters</returns>
+    public Dictionary<char, int> ScoreFrequency(string input)
+    {
+      Dictionary<char, int> frequency = new Dictionary<char, int>();
+      foreach (char character in Cryptography.MOST_COMMON_LETTERS)
+        frequency.Add(character, 0);
+
+      // Score the frequency of "ETAOIN SHRDLU"
+      foreach(char letter in input)
+      {
+        if (frequency.ContainsKey(letter))
+          frequency[letter]++;
+      }
+
+      return frequency;
+    }
+
+    /// <summary>
+    /// Compare the dictionaries that count the frequency of ETAOIN SHRDLU
+    /// </summary>
+    /// <param name="newInput">The new dictionary</param>
+    /// <param name="mostFrequent">The currently most frequent dictionary</param>
+    /// <returns></returns>
+    public bool CompareFrequencies(Dictionary<char, int> newInput, Dictionary<char, int> mostFrequent)
+    {
+      int inputTotal = 0, leadingTotal = 0;
+      foreach(char letter in Cryptography.MOST_COMMON_LETTERS)
+      {
+        inputTotal += newInput[letter];
+        leadingTotal += mostFrequent[letter];
+      }
+      
+      return inputTotal > leadingTotal;
     }
   }
 }
