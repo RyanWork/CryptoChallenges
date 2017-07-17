@@ -19,4 +19,5 @@ Current Progress
 	+ Challenge Two - Completed
 	+ Challenge Three - Completed
 	+ Challenge Four - Completed
-	+ Challenge Five - WIP
+	+ Challenge Five - Completed
+	+ Challenge Six - WIP
