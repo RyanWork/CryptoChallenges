@@ -18,7 +18,8 @@ namespace Cryptopals
 
     static void Main(string[] args)
     {
-
+      Cryptography crypto = new Cryptography();
+      
     }
 
     /// <summary>
@@ -90,7 +91,7 @@ namespace Cryptopals
     {
       StringBuilder joinedString = new StringBuilder();
       for (int i = 0; i < array.Length; i++)
-        joinedString.AppendFormat("{0:x}", array[i]);
+        joinedString.AppendFormat("{0:x2}", array[i]);
       return joinedString.ToString();
     }
 
@@ -149,11 +150,29 @@ namespace Cryptopals
     }
 
     /// <summary>
+    /// Encrypts plaintext with a key-string.
+    /// Encrypts text sequentially for each character in the key
+    /// </summary>
+    /// <param name="plainText">The text to encrypt</param>
+    /// <param name="key">The key word to encrypt with</param>
+    /// <returns></returns>
+    public byte[] RepeatingKeyXOR(string plainText, string key)
+    {
+      byte[] parsedString = Encoding.ASCII.GetBytes(plainText);
+      byte[] keyBytes = Encoding.ASCII.GetBytes(key);
+      byte[] XORBuffer = new byte[plainText.Length];
+      for (int i = 0; i < parsedString.Length; i++)
+        XORBuffer[i] = (byte)(parsedString[i] ^ keyBytes[i % keyBytes.Length]);
+
+      return XORBuffer;
+    }
+
+    /// <summary>
     /// Scores the value of a string. The higher the score, the better.
     /// </summary>
     /// <param name="input">The string to evaluate</param>
     /// <returns>an integer representing the frequency score of the string</returns>
-    public int GetFrequencyScore(string input)
+    private int GetFrequencyScore(string input)
     {
       Dictionary<char, int> frequency = new Dictionary<char, int>();
 
