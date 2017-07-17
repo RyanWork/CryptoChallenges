@@ -48,8 +48,9 @@
     <Reference Include="System.Core" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="CryptoTests.cs" />
+    <Compile Include="SetOne.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="SetTwo.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />

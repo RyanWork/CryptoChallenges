@@ -5,8 +5,9 @@ using System.IO;
 
 namespace CryptopalTests
 {
+  [TestCategory("SetOne")]
   [TestClass]
-  public class CryptoTests
+  public class SetOne
   {
     Cryptography crypto;
 
@@ -16,7 +17,6 @@ namespace CryptopalTests
       this.crypto = new Cryptography();
     }
 
-    [TestCategory("SetOne")]
     [TestMethod]
     public void SetOneChallengeOne()
     {
@@ -27,7 +27,6 @@ namespace CryptopalTests
       Assert.AreEqual(expectedString, Base64);
     }
 
-    [TestCategory("SetOne")]
     [TestMethod]
     public void SetOneChallengeTwo()
     {
@@ -39,7 +38,6 @@ namespace CryptopalTests
       Assert.AreEqual(expectedString, result);
     }
 
-    [TestCategory("SetOne")]
     [TestMethod]
     public void SetOneChallengeThree()
     {
@@ -50,7 +48,6 @@ namespace CryptopalTests
       Assert.AreEqual(expectedString, result);
     }
 
-    [TestCategory("SetOne")]
     [TestMethod]
     public void SetOneChallengeFour()
     {
@@ -60,7 +57,6 @@ namespace CryptopalTests
       Assert.AreEqual(expectedString, result);
     }
 
-    [TestCategory("SetOne")]
     [TestMethod]
     public void SetOneChallengeFive()
     {
