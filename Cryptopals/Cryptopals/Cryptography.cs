@@ -19,7 +19,12 @@ namespace Cryptopals
     static void Main(string[] args)
     {
       Cryptography crypto = new Cryptography();
-      
+
+      HammingDistanceCalculator calc = new HammingDistanceCalculator();
+
+      int val = calc.CalculateDistance(Encoding.ASCII.GetBytes("this is a test"), Encoding.ASCII.GetBytes("wokka wokka!!!"));
+      Console.WriteLine(val);
+      Console.ReadKey();
     }
 
     /// <summary>

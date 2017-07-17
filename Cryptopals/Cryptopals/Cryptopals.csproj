@@ -44,6 +44,7 @@
   <ItemGroup>
     <Compile Include="Cryptography.cs" />
     <Compile Include="Exceptions\UnequalLengthException.cs" />
+    <Compile Include="HammingDistanceCalculator.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>
