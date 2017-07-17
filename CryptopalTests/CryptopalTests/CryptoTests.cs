@@ -1,6 +1,7 @@
 ﻿using System;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Cryptopals;
+using System.IO;
 
 namespace CryptopalTests
 {
@@ -33,7 +34,6 @@ namespace CryptopalTests
       string inputString = "1c0111001f010100061a024b53535009181c";
       string xorString = "686974207468652062756c6c277320657965";
       string expectedString = "746865206b696420646f6e277420706c6179";
-
       string result = this.crypto.JoinArrayToString((this.crypto.XORBuffer(inputString, xorString)));
 
       Assert.AreEqual(expectedString, result);
@@ -46,6 +46,7 @@ namespace CryptopalTests
       string inputString = "1b37373331363f78151b7f2b783431333d78397828372d363c78373e783a393b3736";
       string expectedString = "Cooking MC's like a pound of bacon";
       string result = this.crypto.DecodeSingleByteXOR(inputString);
+
       Assert.AreEqual(expectedString, result);
     }
 
@@ -53,7 +54,10 @@ namespace CryptopalTests
     [TestMethod]
     public void SetOneChallengeFour()
     {
+      string expectedString = "Now that the party is jumping";
+      string result = crypto.DecodeSingleByteXORFile(Cryptography.CHALLENGE_FOUR_FILE);
 
+      Assert.AreEqual(expectedString, result);
     }
   }
 }

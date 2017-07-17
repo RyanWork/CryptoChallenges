@@ -12,44 +12,13 @@ namespace Cryptopals
   public class Cryptography
   {
     /// <summary>
-    /// Most common letters in English alphabet
+    /// Relative file path of the challenge four text file
     /// </summary>
-    private const string MOST_COMMON_LETTERS = "ETAOIN";
-
-    /// <summary>
-    /// Least common letters in English alphabet
-    /// </summary>
-    private const string LEAST_COMMON_LETTERS = "VKJXQZ";
+    public static string CHALLENGE_FOUR_FILE { get; private set; } = Directory.GetParent(Directory.GetCurrentDirectory()).Parent.FullName + @"\Challenge4Text.txt";
 
     static void Main(string[] args)
     {
-      Cryptography crypto = new Cryptography();
-      string inputString = "1b37373331363f78151b7f2b783431333d78397828372d363c78373e783a393b3736";
-      string expectedString = "Cooking MC's like a pound of bacon";
-      string result = crypto.DecodeSingleByteXOR(inputString);
 
-      Console.WriteLine(crypto.DecodeSingleByteXOR(inputString));
-      Console.ReadKey();
-
-      string[] array = File.ReadAllLines(@"C:\Users\rha\Desktop\Encryption\CryptoChallenges\Cryptopals\Cryptopals\Challenge4Text.txt");
-      string best = string.Empty;
-      int bestInput = 0;
-      foreach (string line in array)
-      {
-        string returnVal = crypto.DecodeSingleByteXOR(line);
-        Console.WriteLine(returnVal);
-        Thread.Sleep(25);
-        //int input = crypto.GetFrequencyScore(returnVal);
-
-        //if (input > bestInput)
-        //{
-        //  bestInput = input;
-        //  best = returnVal;
-        //}
-      }
-
-      //Console.WriteLine(best + bestInput);
-      Console.ReadKey();
     }
 
     /// <summary>
@@ -59,17 +28,24 @@ namespace Cryptopals
     /// <returns></returns>
     public string DecodeSingleByteXOR(string encryptedString)
     {
-      char[] alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZ".ToCharArray();
-      string characterString = string.Empty;
       string associatedString = string.Empty;
       int highestScore = 0;
-      foreach (char letter in alphabet)
+
+      // Loop for each possible byte
+      for(int i = byte.MinValue; i <= byte.MaxValue; i ++)
       {
-        characterString = new string(letter, encryptedString.Length / 2);
-        byte[] xorBytes = this.XORBuffer(encryptedString, this.JoinArrayToString(Encoding.ASCII.GetBytes(characterString)));
+        // Fill a byte array with a buffer size matching the encrypting string length
+        byte[] filledByteArray = new byte[encryptedString.Length / 2];
+        for (int k = 0; k < encryptedString.Length / 2; k++)
+          filledByteArray[k] = (byte)i;
+
+        // Decrypt for every value of a byte
+        byte[] parsedString = this.ConvertHexToBase64(encryptedString);
+        byte[] xorBytes = this.XORBuffer(filledByteArray, parsedString);
         string decoded = Encoding.ASCII.GetString(xorBytes);
         int scored = this.GetFrequencyScore(decoded);
 
+        // Evalute the string with the best frequency score
         if (scored > highestScore)
         {
           highestScore = scored;
@@ -80,9 +56,29 @@ namespace Cryptopals
       return associatedString;
     }
 
-    public string DecodeSingleByteXORFile(string filePath)
+    /// <summary>
+    /// Decode a file
+    /// </summary>
+    /// <param name="filepath">the file path</param>
+    /// <returns>The decoded string</returns>
+    public string DecodeSingleByteXORFile(string filepath)
     {
-      return string.Empty;
+      string[] challengeText = File.ReadAllLines(filepath);
+      string bestString = string.Empty;
+      int bestScore = 0;
+      foreach (string line in challengeText)
+      {
+        string ret = this.DecodeSingleByteXOR(line);
+        int retScore = this.GetFrequencyScore(ret);
+
+        if (retScore > bestScore)
+        {
+          bestScore = retScore;
+          bestString = ret;
+        }
+      }
+
+      return bestString.Trim();
     }
 
     /// <summary>
@@ -130,10 +126,24 @@ namespace Cryptopals
       byte[] input1 = this.ConvertHexToBase64(input);
       byte[] input2 = this.ConvertHexToBase64(XOR);
 
-      byte[] resultXOR = new byte[input1.Length];
+      return XORBuffer(input1, input2);
+    }
+
+    /// <summary>
+    /// XOR Two byte buffers
+    /// </summary>
+    /// <param name="input">First buffer</param>
+    /// <param name="XOR">buffer to xor against</param>
+    /// <returns>A byte array containing the XOR'd buffer</returns>
+    public byte[] XORBuffer(byte[] input, byte[] XOR)
+    {
+      if (input.Length != XOR.Length)
+        throw new UnequalLengthException("The input string and the XOR string do not have equal lengths");
+
+      byte[] resultXOR = new byte[input.Length];
       StringBuilder stringXOR = new StringBuilder();
-      for (int i = 0; i < input1.Length; i++)
-        resultXOR[i] = (byte)(input1[i] ^ input2[i]);
+      for (int i = 0; i < input.Length; i++)
+        resultXOR[i] = (byte)(input[i] ^ XOR[i]);
 
       return resultXOR;
     }
@@ -143,39 +153,9 @@ namespace Cryptopals
     /// </summary>
     /// <param name="input">The string to evaluate</param>
     /// <returns>an integer representing the frequency score of the string</returns>
-    private int GetFrequencyScore(string input)
+    public int GetFrequencyScore(string input)
     {
-      //Dictionary<char, int> frequencyCommon = new Dictionary<char, int>(), frequencyUncommon = new Dictionary<char, int>();
-      //int frequencyScore = 0;
-      //foreach (char character in Cryptography.MOST_COMMON_LETTERS)
-      //  frequencyCommon.Add(character, 0);
-
-      //foreach (char character in Cryptography.LEAST_COMMON_LETTERS)
-      //  frequencyUncommon.Add(character, 0);
-
-      //foreach (char letter in input)
-      //{
-      //  char letterFormatted = Char.ToUpper(letter);
-      //  if (frequencyCommon.ContainsKey(letterFormatted))
-      //  {
-      //    // Score the frequency of "ETAOIN"
-      //    frequencyCommon[letterFormatted]++;
-      //    frequencyScore++;
-      //  }
-      //  else if (frequencyUncommon.ContainsKey(letterFormatted))
-      //  {
-      //    // Remove score if the program finds the most uncommon letters
-      //    frequencyUncommon[letterFormatted]++;
-      //    frequencyScore--;
-      //  }
-      //}
-
       Dictionary<char, int> frequency = new Dictionary<char, int>();
-      //foreach (char character in Cryptography.MOST_COMMON_LETTERS)
-      //  frequency.Add(character, 0);
-
-      //foreach (char character in Cryptography.LEAST_COMMON_LETTERS)
-      //  frequency.Add(character, 0);
 
       foreach (char letter in input)
       {
@@ -190,18 +170,16 @@ namespace Cryptopals
       list.Sort((x, y) => y.Value.CompareTo(x.Value));
 
       char[] common = { 'E', 'T', 'A', 'O', 'I', 'N', ' ' };
-      char[] least = { 'V', 'K', 'J', 'Q', 'Z' };
       int frequencyScore = 0;
 
-      List<KeyValuePair<char, int>> TopFive = list.GetRange(0, 5);
-      List<KeyValuePair<char, int>> LastFive = list.GetRange(list.Count - 5, 5);
-
+      List<KeyValuePair<char, int>> TopFive = list.GetRange(0, list.Count >= 5 ? 5 : list.Count);
+      
       foreach (KeyValuePair<char, int> kvp in TopFive)
         if (common.Contains(kvp.Key))
+        {
           frequencyScore++;
-
-      foreach(KeyValuePair<char, int> kvp in LastFive)
-        if(common.Contains(kvp.Key))
+          frequencyScore += kvp.Value;
+        }
 
       return frequencyScore;
     }
