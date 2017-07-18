@@ -15,25 +15,33 @@ namespace Cryptopals
     /// </summary>
     public static string CHALLENGE_FOUR_FILE { get; private set; } = Directory.GetParent(Directory.GetCurrentDirectory()).Parent.FullName + @"\Challenge4Text.txt";
 
+    /// <summary>
+    /// Relative file path of challenge six text file
+    /// </summary>
     public static string CHALLENGE_SIX_FILE { get; private set; } = Directory.GetParent(Directory.GetCurrentDirectory()).Parent.FullName + @"\Challenge6Text.txt";
 
     static void Main(string[] args)
     {
       Cryptography crypto = new Cryptography();
       HammingDistanceCalculator calc = new HammingDistanceCalculator();
+
       int MAX_SIZE = 40;
+      FileInfo info = new FileInfo(Cryptography.CHALLENGE_SIX_FILE);
       byte[] allBytes = File.ReadAllBytes(Cryptography.CHALLENGE_SIX_FILE);
-      //int count = 0;
-      for(int KEYSIZE = 2; KEYSIZE <= MAX_SIZE; KEYSIZE++)
+      for (int KEYSIZE = 2; KEYSIZE <= MAX_SIZE; KEYSIZE++)
       {
+        int blockNum = (int)(info.Length / KEYSIZE);
         int count = 0;
         List<float> distances = new List<float>();
         byte[] firstBuffer = new byte[KEYSIZE], secondBuffer = new byte[KEYSIZE];
         while (count < 4)
         {
-          int offset = KEYSIZE * 2 * count;
+          // Copy data into separate buffers
+          int offset = KEYSIZE * count;
           Buffer.BlockCopy(allBytes, offset, firstBuffer, 0, KEYSIZE);
           Buffer.BlockCopy(allBytes, offset + KEYSIZE, secondBuffer, 0, KEYSIZE);
+          
+          // Calculate distance
           distances.Add(calc.CalculateDistance(firstBuffer, secondBuffer));
           count++;
         }
@@ -41,8 +49,7 @@ namespace Cryptopals
         float averageNormalized = distances.Sum() / (KEYSIZE * 4);
         Console.WriteLine("{0}: Hamming Distance: {1}, Normalized: {2}", KEYSIZE, string.Join(", ", distances), averageNormalized.ToString("0.00"));
       }
-      //string key = crypto.DecodeSingleByteXORFile(Cryptography.CHALLENGE_SIX_FILE, StringType.String);
-      //Console.WriteLine(key);
+
       Console.ReadKey();
     }
 
