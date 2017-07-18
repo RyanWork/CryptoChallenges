@@ -9,6 +9,7 @@ namespace Cryptopals
 {
   public class Cryptography
   {
+
     /// <summary>
     /// Relative file path of the challenge four text file
     /// </summary>
@@ -19,34 +20,73 @@ namespace Cryptopals
     static void Main(string[] args)
     {
       Cryptography crypto = new Cryptography();
-
       HammingDistanceCalculator calc = new HammingDistanceCalculator();
+      int MAX_SIZE = 40;
+      byte[] allBytes = File.ReadAllBytes(Cryptography.CHALLENGE_SIX_FILE);
+      //int count = 0;
+      for(int KEYSIZE = 2; KEYSIZE <= MAX_SIZE; KEYSIZE++)
+      {
+        int count = 0;
+        List<float> distances = new List<float>();
+        byte[] firstBuffer = new byte[KEYSIZE], secondBuffer = new byte[KEYSIZE];
+        while (count < 4)
+        {
+          int offset = KEYSIZE * 2 * count;
+          Buffer.BlockCopy(allBytes, offset, firstBuffer, 0, KEYSIZE);
+          Buffer.BlockCopy(allBytes, offset + KEYSIZE, secondBuffer, 0, KEYSIZE);
+          distances.Add(calc.CalculateDistance(firstBuffer, secondBuffer));
+          count++;
+        }
 
-      int val = calc.CalculateDistance(Encoding.ASCII.GetBytes("this is a test"), Encoding.ASCII.GetBytes("wokka wokka!!!"));
-      Console.WriteLine(val);
+        float averageNormalized = distances.Sum() / (KEYSIZE * 4);
+        Console.WriteLine("{0}: Hamming Distance: {1}, Normalized: {2}", KEYSIZE, string.Join(", ", distances), averageNormalized.ToString("0.00"));
+      }
+      //string key = crypto.DecodeSingleByteXORFile(Cryptography.CHALLENGE_SIX_FILE, StringType.String);
+      //Console.WriteLine(key);
       Console.ReadKey();
+    }
+
+    public enum StringType
+    {
+      Hex,
+      String
     }
 
     /// <summary>
     /// Decode a string encrypted via a single character
     /// </summary>
     /// <param name="encryptedString"></param>
+    /// <param name="stringType">The type of the string</param>
     /// <returns></returns>
-    public string DecodeSingleByteXOR(string encryptedString)
+    public string DecodeSingleByteXOR(string encryptedString, StringType stringType)
     {
       string associatedString = string.Empty;
       int highestScore = 0;
 
-      // Loop for each possible byte
-      for(int i = byte.MinValue; i <= byte.MaxValue; i ++)
+      byte[] parsedString, filledByteArray;
+      switch (stringType)
       {
-        // Fill a byte array with a buffer size matching the encrypting string length
-        byte[] filledByteArray = new byte[encryptedString.Length / 2];
+        case StringType.Hex:
+          parsedString = this.ConvertHexToBase64(encryptedString);
+          filledByteArray = new byte[encryptedString.Length / 2];
+          break;
+        case StringType.String:
+          parsedString = Encoding.ASCII.GetBytes(encryptedString);
+          filledByteArray = new byte[encryptedString.Length];
+          break;
+        default:
+          parsedString = this.ConvertHexToBase64(encryptedString);
+          filledByteArray = new byte[encryptedString.Length / 2];
+          break;
+      }
+
+      // Loop for each possible byte
+      for (int i = byte.MinValue; i <= byte.MaxValue; i ++)
+      {
         for (int k = 0; k < encryptedString.Length / 2; k++)
           filledByteArray[k] = (byte)i;
 
         // Decrypt for every value of a byte
-        byte[] parsedString = this.ConvertHexToBase64(encryptedString);
         byte[] xorBytes = this.XORBuffer(filledByteArray, parsedString);
         string decoded = Encoding.ASCII.GetString(xorBytes);
         int scored = this.GetFrequencyScore(decoded);
@@ -67,14 +107,14 @@ namespace Cryptopals
     /// </summary>
     /// <param name="filepath">the file path</param>
     /// <returns>The decoded string</returns>
-    public string DecodeSingleByteXORFile(string filepath)
+    public string DecodeSingleByteXORFile(string filepath, StringType stringType)
     {
       string[] challengeText = File.ReadAllLines(filepath);
       string bestString = string.Empty;
       int bestScore = 0;
       foreach (string line in challengeText)
       {
-        string ret = this.DecodeSingleByteXOR(line);
+        string ret = this.DecodeSingleByteXOR(line, stringType);
         int retScore = this.GetFrequencyScore(ret);
 
         if (retScore > bestScore)
