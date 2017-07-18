@@ -2,6 +2,7 @@
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Cryptopals;
 using System.IO;
+using System.Text;
 
 namespace CryptopalTests
 {
@@ -43,7 +44,7 @@ namespace CryptopalTests
     {
       string inputString = "1b37373331363f78151b7f2b783431333d78397828372d363c78373e783a393b3736";
       string expectedString = "Cooking MC's like a pound of bacon";
-      string result = this.crypto.DecodeSingleByteXOR(inputString);
+      string result = this.crypto.DecodeSingleByteXOR(inputString, Cryptography.StringType.Hex);
 
       Assert.AreEqual(expectedString, result);
     }
@@ -52,7 +53,7 @@ namespace CryptopalTests
     public void SetOneChallengeFour()
     {
       string expectedString = "Now that the party is jumping";
-      string result = crypto.DecodeSingleByteXORFile(Cryptography.CHALLENGE_FOUR_FILE);
+      string result = crypto.DecodeSingleByteXORFile(Cryptography.CHALLENGE_FOUR_FILE, Cryptography.StringType.Hex);
 
       Assert.AreEqual(expectedString, result);
     }
@@ -65,6 +66,16 @@ namespace CryptopalTests
       string result = crypto.JoinArrayToString(crypto.RepeatingKeyXOR(plaintext, "ICE"));
 
       Assert.AreEqual(expectedString, result);
+    }
+
+    [TestMethod]
+    public void TestHammingDistance()
+    {
+      HammingDistanceCalculator calc = new HammingDistanceCalculator();
+      float expectedValue = 37;
+      float result = calc.CalculateDistance(Encoding.ASCII.GetBytes("this is a test"), Encoding.ASCII.GetBytes("wokka wokka!!!"));
+
+      Assert.AreEqual(expectedValue, result);
     }
   }
 }
