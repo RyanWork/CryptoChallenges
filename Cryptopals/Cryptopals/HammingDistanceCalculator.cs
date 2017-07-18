@@ -24,12 +24,15 @@ namespace Cryptopals
       {
         while (true)
         {
+          // Break if both entries have successfully rotated to 0x00
           if (originalText[i] == 0x00 && newText[i] == 0x00)
             break;
 
+          // If the bits are not equal, count
           if ((originalText[i] & 0x01) != (newText[i] & 0x01))
             changeCounter++;
 
+          // Rotate both entries right
           originalText[i] = (byte)(originalText[i] >> 0x01);
           newText[i] = (byte)(newText[i] >> 0x01);
         }

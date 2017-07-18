@@ -2,9 +2,7 @@
 using Cryptopals.Exceptions;
 using System.Text;
 using System.Collections.Generic;
-using System.Collections.Specialized;
 using System.IO;
-using System.Threading;
 using System.Linq;
 
 namespace Cryptopals
@@ -15,6 +13,8 @@ namespace Cryptopals
     /// Relative file path of the challenge four text file
     /// </summary>
     public static string CHALLENGE_FOUR_FILE { get; private set; } = Directory.GetParent(Directory.GetCurrentDirectory()).Parent.FullName + @"\Challenge4Text.txt";
+
+    public static string CHALLENGE_SIX_FILE { get; private set; } = Directory.GetParent(Directory.GetCurrentDirectory()).Parent.FullName + @"\Challenge6Text.txt";
 
     static void Main(string[] args)
     {
