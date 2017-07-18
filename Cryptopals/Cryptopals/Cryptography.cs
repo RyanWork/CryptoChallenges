@@ -67,7 +67,7 @@ namespace Cryptopals
       switch (stringType)
       {
         case StringType.Hex:
-          parsedString = this.ConvertHexToBase64(encryptedString);
+          parsedString = this.ConvertHexStringToByteArray(encryptedString);
           filledByteArray = new byte[encryptedString.Length / 2];
           break;
         case StringType.String:
@@ -75,7 +75,7 @@ namespace Cryptopals
           filledByteArray = new byte[encryptedString.Length];
           break;
         default:
-          parsedString = this.ConvertHexToBase64(encryptedString);
+          parsedString = this.ConvertHexStringToByteArray(encryptedString);
           filledByteArray = new byte[encryptedString.Length / 2];
           break;
       }
@@ -141,11 +141,11 @@ namespace Cryptopals
     }
 
     /// <summary>
-    /// Converts a hex string into base 64
+    /// Converts a hex string into a byte array
     /// </summary>
     /// <param name="hexString">The hex string to convert</param>
     /// <returns>A string representation of the base 64 version of the hex string</returns>
-    public byte[] ConvertHexToBase64(string hexString)
+    public byte[] ConvertHexStringToByteArray(string hexString)
     {
       // Convert string to byte array
       int NumberChars = hexString.Length;
@@ -169,8 +169,8 @@ namespace Cryptopals
       if (input.Length != XOR.Length)
         throw new UnequalLengthException("The input string and the XOR string do not have equal lengths");
 
-      byte[] input1 = this.ConvertHexToBase64(input);
-      byte[] input2 = this.ConvertHexToBase64(XOR);
+      byte[] input1 = this.ConvertHexStringToByteArray(input);
+      byte[] input2 = this.ConvertHexStringToByteArray(XOR);
 
       return XORBuffer(input1, input2);
     }
