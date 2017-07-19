@@ -20,21 +20,21 @@ namespace Cryptopals
         throw new Exceptions.UnequalLengthException();
 
       int changeCounter = 0;
-      for(int i = 0; i < originalText.Length; i++)
+      for (int i = 0; i < originalText.Length; i++)
       {
+        byte XORBytes = (byte)(originalText[i] ^ newText[i]);
         while (true)
         {
-          // Break if both entries have successfully rotated to 0x00
-          if (originalText[i] == 0x00 && newText[i] == 0x00)
+          // If we finished iterating through the byte
+          if (XORBytes == 0x00)
             break;
 
-          // If the bits are not equal, count
-          if ((originalText[i] & 0x01) != (newText[i] & 0x01))
+          // Check if the byte is 1
+          if ((XORBytes & 0x01) == 0x01)
             changeCounter++;
 
-          // Rotate both entries right
-          originalText[i] = (byte)(originalText[i] >> 0x01);
-          newText[i] = (byte)(newText[i] >> 0x01);
+          // Shift the byte to count
+          XORBytes = (byte)(XORBytes >> 0x01);
         }
       }
 
