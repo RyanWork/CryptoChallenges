@@ -21,3 +21,7 @@ Current Progress
 	+ Challenge Four - Completed
 	+ Challenge Five - Completed
 	+ Challenge Six - WIP
+		+ Hamming Distance algorithm - Completed
+		+ Data column partitioning - Completed
+		+ Key Finding algorithm - WIP
+		+ Decoding - WIP
