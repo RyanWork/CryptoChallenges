@@ -23,31 +23,88 @@ namespace Cryptopals
     static void Main(string[] args)
     {
       Cryptography crypto = new Cryptography();
+
       HammingDistanceCalculator calc = new HammingDistanceCalculator();
 
+      Dictionary<int, float> normalizedEntries = new Dictionary<int, float>();
       int MAX_SIZE = 40;
       FileInfo info = new FileInfo(Cryptography.CHALLENGE_SIX_FILE);
-      byte[] allBytes = File.ReadAllBytes(Cryptography.CHALLENGE_SIX_FILE);
+      
+      string base64Text = File.ReadAllText(Cryptography.CHALLENGE_SIX_FILE);
+      byte[] allBytes = Convert.FromBase64String(base64Text);
+
       for (int KEYSIZE = 2; KEYSIZE <= MAX_SIZE; KEYSIZE++)
       {
         int blockNum = (int)(info.Length / KEYSIZE);
-        int count = 0;
         List<float> distances = new List<float>();
-        byte[] firstBuffer = new byte[KEYSIZE], secondBuffer = new byte[KEYSIZE];
-        while (count < 4)
+        byte[] firstBuffer = new byte[KEYSIZE], secondBuffer = new byte[KEYSIZE], thirdBuffer = new byte[KEYSIZE], fourthBuffer = new byte[KEYSIZE];
+
+        Buffer.BlockCopy(allBytes, 0, firstBuffer, 0, KEYSIZE);
+        Buffer.BlockCopy(allBytes, KEYSIZE * 1, secondBuffer, 0, KEYSIZE);
+        Buffer.BlockCopy(allBytes, KEYSIZE * 2, thirdBuffer, 0, KEYSIZE);
+        Buffer.BlockCopy(allBytes, KEYSIZE * 3, fourthBuffer, 0, KEYSIZE);
+
+        distances.Add(calc.CalculateDistance(firstBuffer, secondBuffer));
+        distances.Add(calc.CalculateDistance(firstBuffer, thirdBuffer));
+        distances.Add(calc.CalculateDistance(firstBuffer, fourthBuffer));
+        distances.Add(calc.CalculateDistance(secondBuffer, thirdBuffer));
+        distances.Add(calc.CalculateDistance(secondBuffer, fourthBuffer));
+        distances.Add(calc.CalculateDistance(thirdBuffer, fourthBuffer));
+
+        float averageNormalized = distances.Sum() / KEYSIZE;
+        normalizedEntries.Add(KEYSIZE, averageNormalized);
+
+        StringBuilder hammingDistances = new StringBuilder();
+        foreach (float dist in distances)
+          hammingDistances.Append(dist.ToString("0.00") + ", ");
+
+        // Remove comma and space
+        hammingDistances.Remove(hammingDistances.Length - 2, 2);
+
+        Console.WriteLine("{0}: Hamming Distance: Normalized: {1}", KEYSIZE < 10 ? "0" + KEYSIZE : KEYSIZE.ToString(), /*hammingDistances.ToString(), */averageNormalized.ToString("0.00"));
+      }
+
+      List<KeyValuePair<int, float>> list = normalizedEntries.ToList();
+      list.Sort((pair1, pair2) => pair1.Value.CompareTo(pair2.Value));
+      foreach (KeyValuePair<int, float> entry in list)
+        Console.WriteLine("Key Size: {0}, Normalized Value: {1}", entry.Key < 10 ? "0" + entry.Key : entry.Key.ToString(), entry.Value.ToString("0.00"));
+
+      // Only save the top 4 entries
+      list = list.GetRange(0, 4);
+
+      foreach(KeyValuePair<int, float> entry in list)
+      {
+        int colNum = entry.Key;
+        int numBlocks = allBytes.Length / colNum;
+        int bytesLeft = allBytes.Length % colNum;
+
+        byte[][] dataMatrix = new byte[colNum][];
+
+        // Loop for every column in matrix
+        for (int i = 0; i < colNum; i++)
         {
-          // Copy data into separate buffers
-          int offset = KEYSIZE * count;
-          Buffer.BlockCopy(allBytes, offset, firstBuffer, 0, KEYSIZE);
-          Buffer.BlockCopy(allBytes, offset + KEYSIZE, secondBuffer, 0, KEYSIZE);
-          
-          // Calculate distance
-          distances.Add(calc.CalculateDistance(firstBuffer, secondBuffer));
-          count++;
+          bool leftOverData = i < bytesLeft;
+          byte[] columnData = new byte[ leftOverData ? numBlocks + 1 : numBlocks];
+
+          // Loop for the entire row
+          for (int j = 0; j < numBlocks; j++)
+            columnData[j] = allBytes[j * colNum + i];
+
+          if (leftOverData)
+          {
+            columnData[numBlocks] = allBytes[numBlocks * colNum + i];
+          }
+
+          dataMatrix[i] = columnData;
         }
 
-        float averageNormalized = distances.Sum() / (KEYSIZE * 4);
-        Console.WriteLine("{0}: Hamming Distance: {1}, Normalized: {2}", KEYSIZE, string.Join(", ", distances), averageNormalized.ToString("0.00"));
+        StringBuilder key = new StringBuilder();
+        foreach (byte[] keyPiece in dataMatrix)
+        {
+          key.Append(crypto.DecodeSingleByteXOR(keyPiece));
+        }
+
+        Console.WriteLine(key.ToString());
       }
 
       Console.ReadKey();
@@ -67,34 +124,37 @@ namespace Cryptopals
     /// <returns></returns>
     public string DecodeSingleByteXOR(string encryptedString, StringType stringType)
     {
-      string associatedString = string.Empty;
-      int highestScore = 0;
-
-      byte[] parsedString, filledByteArray;
+      byte[] parsedString;
       switch (stringType)
       {
         case StringType.Hex:
           parsedString = this.ConvertHexStringToByteArray(encryptedString);
-          filledByteArray = new byte[encryptedString.Length / 2];
           break;
         case StringType.String:
           parsedString = Encoding.ASCII.GetBytes(encryptedString);
-          filledByteArray = new byte[encryptedString.Length];
           break;
         default:
           parsedString = this.ConvertHexStringToByteArray(encryptedString);
-          filledByteArray = new byte[encryptedString.Length / 2];
           break;
       }
 
+      return DecodeSingleByteXOR(parsedString);
+    }
+
+    public string DecodeSingleByteXOR(byte[] encryptedBytes)
+    {
+      string associatedString = string.Empty;
+      int highestScore = 0;
+
+      byte[] filledByteArray = new byte[encryptedBytes.Length];
       // Loop for each possible byte
-      for (int i = byte.MinValue; i <= byte.MaxValue; i ++)
+      for (int i = byte.MinValue; i <= byte.MaxValue; i++)
       {
-        for (int k = 0; k < encryptedString.Length / 2; k++)
+        for (int k = 0; k < encryptedBytes.Length; k++)
           filledByteArray[k] = (byte)i;
 
         // Decrypt for every value of a byte
-        byte[] xorBytes = this.XORBuffer(filledByteArray, parsedString);
+        byte[] xorBytes = this.XORBuffer(filledByteArray, encryptedBytes);
         string decoded = Encoding.ASCII.GetString(xorBytes);
         int scored = this.GetFrequencyScore(decoded);
 
@@ -151,7 +211,7 @@ namespace Cryptopals
     /// Converts a hex string into a byte array
     /// </summary>
     /// <param name="hexString">The hex string to convert</param>
-    /// <returns>A string representation of the base 64 version of the hex string</returns>
+    /// <returns>A byte array containing the hex string</returns>
     public byte[] ConvertHexStringToByteArray(string hexString)
     {
       // Convert string to byte array
