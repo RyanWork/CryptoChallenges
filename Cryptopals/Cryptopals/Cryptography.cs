@@ -141,10 +141,16 @@ namespace Cryptopals
       return DecodeSingleByteXOR(parsedString);
     }
 
+    /// <summary>
+    /// Decode a single byte XOR on an array of bytes that has been encrypted
+    /// </summary>
+    /// <param name="encryptedBytes">The bytes that are encrypted</param>
+    /// <returns>Return a string with the associated message of the decrypted bytes</returns>
     public string DecodeSingleByteXOR(byte[] encryptedBytes)
     {
       string associatedString = string.Empty;
       int highestScore = 0;
+      int track = 0;
 
       byte[] filledByteArray = new byte[encryptedBytes.Length];
       // Loop for each possible byte
@@ -163,6 +169,7 @@ namespace Cryptopals
         {
           highestScore = scored;
           associatedString = decoded;
+          track = i;
         }
       }
 
