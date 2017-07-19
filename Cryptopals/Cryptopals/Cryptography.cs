@@ -72,6 +72,9 @@ namespace Cryptopals
       // Only save the top 4 entries
       list = list.GetRange(0, 4);
 
+      int keyScore = 0;
+      string keyBest = string.Empty;
+
       foreach(KeyValuePair<int, float> entry in list)
       {
         int colNum = entry.Key;
@@ -101,12 +104,20 @@ namespace Cryptopals
         StringBuilder key = new StringBuilder();
         foreach (byte[] keyPiece in dataMatrix)
         {
-          key.Append(crypto.DecodeSingleByteXOR(keyPiece));
+          int character = -1;
+          crypto.DecodeSingleByteXOR(keyPiece, out character);
+          key.Append((char)character);
         }
 
-        Console.WriteLine(key.ToString());
+        int score = crypto.GetFrequencyScore(key.ToString());
+        if(score > keyScore)
+        {
+          keyScore = score;
+          keyBest = key.ToString();
+        }
       }
 
+      Console.WriteLine("Found Key: {0}", keyBest);
       Console.ReadKey();
     }
 
@@ -138,7 +149,9 @@ namespace Cryptopals
           break;
       }
 
-      return DecodeSingleByteXOR(parsedString);
+      int character = -1;
+      string message = DecodeSingleByteXOR(parsedString, out character);
+      return message;
     }
 
     /// <summary>
@@ -146,11 +159,11 @@ namespace Cryptopals
     /// </summary>
     /// <param name="encryptedBytes">The bytes that are encrypted</param>
     /// <returns>Return a string with the associated message of the decrypted bytes</returns>
-    public string DecodeSingleByteXOR(byte[] encryptedBytes)
+    public string DecodeSingleByteXOR(byte[] encryptedBytes, out int character)
     {
       string associatedString = string.Empty;
       int highestScore = 0;
-      int track = 0;
+      character = 0;
 
       byte[] filledByteArray = new byte[encryptedBytes.Length];
       // Loop for each possible byte
@@ -169,7 +182,7 @@ namespace Cryptopals
         {
           highestScore = scored;
           associatedString = decoded;
-          track = i;
+          character = i;
         }
       }
 
