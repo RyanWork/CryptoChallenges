@@ -4,7 +4,7 @@ using System.Text;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Security.Cryptography;
+using OpenSSL.Crypto;
 
 namespace Cryptopals
 {
@@ -14,43 +14,26 @@ namespace Cryptopals
     /// <summary>
     /// Relative file path of the challenge four text file
     /// </summary>
-    public static string CHALLENGE_FOUR_FILE { get; private set; } = Directory.GetParent(Directory.GetCurrentDirectory()).Parent.FullName + @"\Challenge4Text.txt";
+    public static string CHALLENGE_FOUR_FILE { get; } = Directory.GetParent(Directory.GetCurrentDirectory()).Parent.FullName + @"\Challenge4Text.txt";
 
     /// <summary>
     /// Relative file path of challenge six text file
     /// </summary>
-    public static string CHALLENGE_SIX_FILE { get; private set; } = Directory.GetParent(Directory.GetCurrentDirectory()).Parent.FullName + @"\Challenge6Text.txt";
+    public static string CHALLENGE_SIX_FILE { get; } = Directory.GetParent(Directory.GetCurrentDirectory()).Parent.FullName + @"\Challenge6Text.txt";
 
     /// <summary>
     /// Relative file path of challenge seven text file
     /// </summary>
-    public static string CHALLENGE_SEVEN_FILE { get; private set; } = Directory.GetParent(Directory.GetCurrentDirectory()).Parent.FullName + @"\Challenge7Text.txt";
+    public static string CHALLENGE_SEVEN_FILE { get; } = Directory.GetParent(Directory.GetCurrentDirectory()).Parent.FullName + @"\Challenge7Text.txt";
 
     static void Main(string[] args)
     {
       Cryptography crypto = new Cryptography();
       HammingDistanceCalculator calc = new HammingDistanceCalculator();
 
-      AesCryptoServiceProvider aes = new AesCryptoServiceProvider();
-      aes.Mode = CipherMode.ECB;
-      aes.Key = Encoding.ASCII.GetBytes("YELLOW SUBMARINE");
+      // TODO: Figure out OpenSSL
+      //Cipher cipher = Cipher.AES_128_ECB
 
-      byte[] bytes = Convert.FromBase64String(File.ReadAllText(Cryptography.CHALLENGE_SEVEN_FILE));
-      ICryptoTransform transform = aes.CreateDecryptor();
-
-      using (MemoryStream ms = new MemoryStream())
-      {
-        using (CryptoStream cs = new CryptoStream(ms, transform, CryptoStreamMode.Write))
-        {
-          cs.Write(bytes, 0, bytes.Length);
-          cs.FlushFinalBlock();
-        }
-
-        byte[] array = ms.ToArray();
-        Console.WriteLine(Encoding.ASCII.GetString(array));
-      }
-
-      Console.ReadKey();
     }
 
     public enum StringType
