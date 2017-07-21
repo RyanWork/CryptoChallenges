@@ -4,6 +4,7 @@ using System.Text;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Security.Cryptography;
 
 namespace Cryptopals
 {
@@ -20,12 +21,34 @@ namespace Cryptopals
     /// </summary>
     public static string CHALLENGE_SIX_FILE { get; private set; } = Directory.GetParent(Directory.GetCurrentDirectory()).Parent.FullName + @"\Challenge6Text.txt";
 
+    /// <summary>
+    /// Relative file path of challenge seven text file
+    /// </summary>
+    public static string CHALLENGE_SEVEN_FILE { get; private set; } = Directory.GetParent(Directory.GetCurrentDirectory()).Parent.FullName + @"\Challenge7Text.txt";
+
     static void Main(string[] args)
     {
       Cryptography crypto = new Cryptography();
       HammingDistanceCalculator calc = new HammingDistanceCalculator();
 
+      AesCryptoServiceProvider aes = new AesCryptoServiceProvider();
+      aes.Mode = CipherMode.ECB;
+      aes.Key = Encoding.ASCII.GetBytes("YELLOW SUBMARINE");
 
+      byte[] bytes = Convert.FromBase64String(File.ReadAllText(Cryptography.CHALLENGE_SEVEN_FILE));
+      ICryptoTransform transform = aes.CreateDecryptor();
+
+      using (MemoryStream ms = new MemoryStream())
+      {
+        using (CryptoStream cs = new CryptoStream(ms, transform, CryptoStreamMode.Write))
+        {
+          cs.Write(bytes, 0, bytes.Length);
+          cs.FlushFinalBlock();
+        }
+
+        byte[] array = ms.ToArray();
+        Console.WriteLine(Encoding.ASCII.GetString(array));
+      }
 
       Console.ReadKey();
     }
@@ -34,6 +57,34 @@ namespace Cryptopals
     {
       Hex,
       String
+    }
+
+    /// <summary>
+    /// Decrypt cipher text with a given key
+    /// </summary>
+    /// <param name="key">The key in bytes</param>
+    /// <returns>the decrypted text</returns>
+    public string DecryptECBText(byte[] key)
+    {
+      AesCryptoServiceProvider aes = new AesCryptoServiceProvider();
+      aes.Mode = CipherMode.ECB;
+      aes.Key = key;
+
+      byte[] bytes = Convert.FromBase64String(File.ReadAllText(Cryptography.CHALLENGE_SEVEN_FILE));
+      ICryptoTransform transform = aes.CreateDecryptor();
+
+      // Decrypt and write to memory
+      using (MemoryStream ms = new MemoryStream())
+      {
+        using (CryptoStream cs = new CryptoStream(ms, transform, CryptoStreamMode.Write))
+        {
+          cs.Write(bytes, 0, bytes.Length);
+          cs.FlushFinalBlock();
+        }
+
+        byte[] array = ms.ToArray();
+        return Encoding.ASCII.GetString(array);
+      }
     }
 
     /// <summary>
