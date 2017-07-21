@@ -307,7 +307,7 @@ namespace Cryptopals
 
       foreach (char letter in input)
       {
-        if ((letter >= 0x41 && letter <= 0x5A) || (letter >= 0x61 && letter <= 0x7a) || letter == 0x20)
+        if ((letter >= 'A' && letter <= 'Z') || (letter >= 'a' && letter <= 'z') || letter == ' ')
         {
           // If the letter is part of the alphabet (A-Z || a-z || ' ')
           char letterFormatted = Char.ToUpper(letter);
