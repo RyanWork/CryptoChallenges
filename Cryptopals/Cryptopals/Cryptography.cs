@@ -22,15 +22,10 @@ namespace Cryptopals
 
     static void Main(string[] args)
     {
-      //Console.WriteLine(Encoding.ASCII.GetString(new byte[] { 0x100 }));
-      //Console.ReadKey();
-
       Cryptography crypto = new Cryptography();
       HammingDistanceCalculator calc = new HammingDistanceCalculator();
 
-      string base64Text = File.ReadAllText(Cryptography.CHALLENGE_SIX_FILE);
-      byte[] allBytes = Convert.FromBase64String(base64Text);
-      Console.WriteLine(crypto.BreakRepeatingXOR(allBytes));
+
 
       Console.ReadKey();
     }
@@ -225,12 +220,14 @@ namespace Cryptopals
       double keyScore = -1;
       string keyBest = string.Empty;
 
+      // Loop through every suggested key size
       foreach (KeyValuePair<int, float> entry in potentialKeys)
       {
         int colNum = entry.Key;
         int numBlocks = cipherText.Length / colNum;
         int bytesLeft = cipherText.Length % colNum;
 
+        // Data Matrix that partitions data and lines it up with characters in the key
         byte[][] dataMatrix = new byte[colNum][];
 
         // Loop for every column in matrix
@@ -244,21 +241,26 @@ namespace Cryptopals
             columnData[j] = cipherText[j * colNum + i];
 
           if (leftOverData)
-          {
             columnData[numBlocks] = cipherText[numBlocks * colNum + i];
-          }
 
+          // Add the column into the matrix
           dataMatrix[i] = columnData;
         }
 
         StringBuilder key = new StringBuilder();
+
+        // Loop for each column in the matrix
+        // Finds the corresponding character that encrypted the column of data
         foreach (byte[] keyPiece in dataMatrix)
         {
           int character = -1;
           this.DecodeSingleByteXOR(keyPiece, out character);
+
+          // Add the character to the key
           key.Append((char)character);
         }
 
+        // Score the key and determine the best key
         double score = this.GetFrequencyScore(key.ToString());
         if (keyScore < 0 || score >= 0 && score < keyScore)
         {
@@ -267,20 +269,26 @@ namespace Cryptopals
         }
       }
 
+      // Cipher XOR Key = Plain text
       byte[] plainText = this.RepeatingKeyXOR(Encoding.ASCII.GetString(cipherText), keyBest);
       return Encoding.ASCII.GetString(plainText);
     }
 
+    /// <summary>
+    /// Get the score for a string input
+    /// </summary>
+    /// <param name="input">The text as a string</param>
+    /// <returns>The score of the string</returns>
     private double GetFrequencyScore(string input)
     {
       return this.GetFrequencyScore(Encoding.ASCII.GetBytes(input));
     }
 
     /// <summary>
-    /// Scores the value of a string. The higher the score, the better.
+    /// Scores the value of a string. The lower the score, the better.
     /// </summary>
-    /// <param name="input">The string to evaluate</param>
-    /// <returns>an integer representing the frequency score of the string</returns>
+    /// <param name="input">The string as bytes to evaluate</param>
+    /// <returns>a double representing the frequency score of the string</returns>
     private double GetFrequencyScore(byte[] input)
     {
       // If the input was empty
@@ -327,6 +335,7 @@ namespace Cryptopals
       if (ignoreCharacterCount >= input.Length)
         return -1;
 
+      // Calculate and score the text
       CharacterFrequency expectedFrequencies = new CharacterFrequency();
       double sum = 0;
       int validCharLength = input.Length - ignoreCharacterCount;
@@ -401,6 +410,5 @@ namespace Cryptopals
       // Only save the top 4 entries
       return list.GetRange(0, 4);
     }
-
   }
 }
