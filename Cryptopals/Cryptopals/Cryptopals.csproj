@@ -42,6 +42,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="CharacterFrequency.cs" />
     <Compile Include="Cryptography.cs" />
     <Compile Include="Exceptions\UnequalLengthException.cs" />
     <Compile Include="HammingDistanceCalculator.cs" />

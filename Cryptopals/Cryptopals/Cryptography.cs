@@ -22,102 +22,16 @@ namespace Cryptopals
 
     static void Main(string[] args)
     {
-      Cryptography crypto = new Cryptography();
+      //Console.WriteLine(Encoding.ASCII.GetString(new byte[] { 0x100 }));
+      //Console.ReadKey();
 
+      Cryptography crypto = new Cryptography();
       HammingDistanceCalculator calc = new HammingDistanceCalculator();
 
-      Dictionary<int, float> normalizedEntries = new Dictionary<int, float>();
-      int MAX_SIZE = 40;
-      FileInfo info = new FileInfo(Cryptography.CHALLENGE_SIX_FILE);
-      
       string base64Text = File.ReadAllText(Cryptography.CHALLENGE_SIX_FILE);
       byte[] allBytes = Convert.FromBase64String(base64Text);
+      Console.WriteLine(crypto.BreakRepeatingXOR(allBytes));
 
-      for (int KEYSIZE = 2; KEYSIZE <= MAX_SIZE; KEYSIZE++)
-      {
-        int blockNum = (int)(info.Length / KEYSIZE);
-        List<float> distances = new List<float>();
-        byte[] firstBuffer = new byte[KEYSIZE], secondBuffer = new byte[KEYSIZE], thirdBuffer = new byte[KEYSIZE], fourthBuffer = new byte[KEYSIZE];
-
-        Buffer.BlockCopy(allBytes, 0, firstBuffer, 0, KEYSIZE);
-        Buffer.BlockCopy(allBytes, KEYSIZE * 1, secondBuffer, 0, KEYSIZE);
-        Buffer.BlockCopy(allBytes, KEYSIZE * 2, thirdBuffer, 0, KEYSIZE);
-        Buffer.BlockCopy(allBytes, KEYSIZE * 3, fourthBuffer, 0, KEYSIZE);
-
-        distances.Add(calc.CalculateDistance(firstBuffer, secondBuffer));
-        distances.Add(calc.CalculateDistance(firstBuffer, thirdBuffer));
-        distances.Add(calc.CalculateDistance(firstBuffer, fourthBuffer));
-        distances.Add(calc.CalculateDistance(secondBuffer, thirdBuffer));
-        distances.Add(calc.CalculateDistance(secondBuffer, fourthBuffer));
-        distances.Add(calc.CalculateDistance(thirdBuffer, fourthBuffer));
-
-        float averageNormalized = distances.Sum() / KEYSIZE;
-        normalizedEntries.Add(KEYSIZE, averageNormalized);
-
-        StringBuilder hammingDistances = new StringBuilder();
-        foreach (float dist in distances)
-          hammingDistances.Append(dist.ToString("0.00") + ", ");
-
-        // Remove comma and space
-        hammingDistances.Remove(hammingDistances.Length - 2, 2);
-
-        Console.WriteLine("{0}: Hamming Distance: Normalized: {1}", KEYSIZE < 10 ? "0" + KEYSIZE : KEYSIZE.ToString(), /*hammingDistances.ToString(), */averageNormalized.ToString("0.00"));
-      }
-
-      List<KeyValuePair<int, float>> list = normalizedEntries.ToList();
-      list.Sort((pair1, pair2) => pair1.Value.CompareTo(pair2.Value));
-      foreach (KeyValuePair<int, float> entry in list)
-        Console.WriteLine("Key Size: {0}, Normalized Value: {1}", entry.Key < 10 ? "0" + entry.Key : entry.Key.ToString(), entry.Value.ToString("0.00"));
-
-      // Only save the top 4 entries
-      list = list.GetRange(0, 4);
-
-      int keyScore = 0;
-      string keyBest = string.Empty;
-
-      foreach(KeyValuePair<int, float> entry in list)
-      {
-        int colNum = entry.Key;
-        int numBlocks = allBytes.Length / colNum;
-        int bytesLeft = allBytes.Length % colNum;
-
-        byte[][] dataMatrix = new byte[colNum][];
-
-        // Loop for every column in matrix
-        for (int i = 0; i < colNum; i++)
-        {
-          bool leftOverData = i < bytesLeft;
-          byte[] columnData = new byte[ leftOverData ? numBlocks + 1 : numBlocks];
-
-          // Loop for the entire row
-          for (int j = 0; j < numBlocks; j++)
-            columnData[j] = allBytes[j * colNum + i];
-
-          if (leftOverData)
-          {
-            columnData[numBlocks] = allBytes[numBlocks * colNum + i];
-          }
-
-          dataMatrix[i] = columnData;
-        }
-
-        StringBuilder key = new StringBuilder();
-        foreach (byte[] keyPiece in dataMatrix)
-        {
-          int character = -1;
-          crypto.DecodeSingleByteXOR(keyPiece, out character);
-          key.Append((char)character);
-        }
-
-        int score = crypto.GetFrequencyScore(key.ToString());
-        if(score > keyScore)
-        {
-          keyScore = score;
-          keyBest = key.ToString();
-        }
-      }
-
-      Console.WriteLine("Found Key: {0}", keyBest);
       Console.ReadKey();
     }
 
@@ -162,7 +76,7 @@ namespace Cryptopals
     public string DecodeSingleByteXOR(byte[] encryptedBytes, out int character)
     {
       string associatedString = string.Empty;
-      int highestScore = 0;
+      double highestScore = -1;
       character = 0;
 
       byte[] filledByteArray = new byte[encryptedBytes.Length];
@@ -175,10 +89,10 @@ namespace Cryptopals
         // Decrypt for every value of a byte
         byte[] xorBytes = this.XORBuffer(filledByteArray, encryptedBytes);
         string decoded = Encoding.ASCII.GetString(xorBytes);
-        int scored = this.GetFrequencyScore(decoded);
+        double scored = this.GetFrequencyScore(xorBytes);
 
         // Evalute the string with the best frequency score
-        if (scored > highestScore)
+        if (highestScore < 0 || (scored >= 0 && scored < highestScore))
         {
           highestScore = scored;
           associatedString = decoded;
@@ -198,13 +112,13 @@ namespace Cryptopals
     {
       string[] challengeText = File.ReadAllLines(filepath);
       string bestString = string.Empty;
-      int bestScore = 0;
+      double bestScore = -1;
       foreach (string line in challengeText)
       {
         string ret = this.DecodeSingleByteXOR(line, stringType);
-        int retScore = this.GetFrequencyScore(ret);
+        double retScore = this.GetFrequencyScore(ret);
 
-        if (retScore > bestScore)
+        if (bestScore < 0 || (retScore >= 0 && retScore < bestScore))
         {
           bestScore = retScore;
           bestString = ret;
@@ -300,39 +214,193 @@ namespace Cryptopals
     }
 
     /// <summary>
+    /// Decrypt text that has been encrypted via a Repeating XOR
+    /// </summary>
+    /// <param name="cipherText">The encrypted text</param>
+    /// <returns>The decrypted string</returns>
+    public string BreakRepeatingXOR(byte[] cipherText)
+    {
+      List<KeyValuePair<int, float>> potentialKeys = this.FindKeySize(cipherText);
+
+      double keyScore = -1;
+      string keyBest = string.Empty;
+
+      foreach (KeyValuePair<int, float> entry in potentialKeys)
+      {
+        int colNum = entry.Key;
+        int numBlocks = cipherText.Length / colNum;
+        int bytesLeft = cipherText.Length % colNum;
+
+        byte[][] dataMatrix = new byte[colNum][];
+
+        // Loop for every column in matrix
+        for (int i = 0; i < colNum; i++)
+        {
+          bool leftOverData = i < bytesLeft;
+          byte[] columnData = new byte[leftOverData ? numBlocks + 1 : numBlocks];
+
+          // Loop for the entire row
+          for (int j = 0; j < numBlocks; j++)
+            columnData[j] = cipherText[j * colNum + i];
+
+          if (leftOverData)
+          {
+            columnData[numBlocks] = cipherText[numBlocks * colNum + i];
+          }
+
+          dataMatrix[i] = columnData;
+        }
+
+        StringBuilder key = new StringBuilder();
+        foreach (byte[] keyPiece in dataMatrix)
+        {
+          int character = -1;
+          this.DecodeSingleByteXOR(keyPiece, out character);
+          key.Append((char)character);
+        }
+
+        double score = this.GetFrequencyScore(key.ToString());
+        if (keyScore < 0 || score >= 0 && score < keyScore)
+        {
+          keyScore = score;
+          keyBest = key.ToString();
+        }
+      }
+
+      byte[] plainText = this.RepeatingKeyXOR(Encoding.ASCII.GetString(cipherText), keyBest);
+      return Encoding.ASCII.GetString(plainText);
+    }
+
+    private double GetFrequencyScore(string input)
+    {
+      return this.GetFrequencyScore(Encoding.ASCII.GetBytes(input));
+    }
+
+    /// <summary>
     /// Scores the value of a string. The higher the score, the better.
     /// </summary>
     /// <param name="input">The string to evaluate</param>
     /// <returns>an integer representing the frequency score of the string</returns>
-    private int GetFrequencyScore(string input)
+    private double GetFrequencyScore(byte[] input)
     {
+      // If the input was empty
+      if (input.Length <= 0)
+        return -1;
+
       Dictionary<char, int> frequency = new Dictionary<char, int>();
+      int ignoreCharacterCount = 0;
+
+      // Populate dictionary with the alphabet
+      for(int i = 0; i < 26; i++)
+        frequency.Add((char)(0x41 + i), 0);
+
+      // Add space to dictionary
+      frequency.Add(' ', 0);
 
       foreach (char letter in input)
       {
-        char letterFormatted = Char.ToUpper(letter);
-        if (!frequency.ContainsKey(letterFormatted))
-          frequency.Add(letterFormatted, 0);
-
-        frequency[letterFormatted]++;
+        if ((letter >= 0x41 && letter <= 0x5A) || (letter >= 0x61 && letter <= 0x7a) || letter == 0x20)
+        {
+          // If the letter is part of the alphabet (A-Z || a-z || ' ')
+          char letterFormatted = Char.ToUpper(letter);
+          frequency[letterFormatted]++;
+        }
+        else if (
+          (letter >= 0x20 && letter <= 0x7E) ||
+          letter == 0x09 ||
+          letter == 0x0A ||
+          letter == 0x0D
+          )
+        {
+          // Character exists but is a number/punctuation
+          // Or character is a tab, carriage return, or line feed
+          ignoreCharacterCount++;
+        }
+        else
+        { 
+          // Some other non-valid english character, not valid
+          return -1;
+        }
       }
 
-      List<KeyValuePair<char, int>> list = frequency.ToList();
-      list.Sort((x, y) => y.Value.CompareTo(x.Value));
+      // If the entire sentence has invalid characters, return a negative (invalid) number
+      if (ignoreCharacterCount >= input.Length)
+        return -1;
 
-      char[] common = { 'E', 'T', 'A', 'O', 'I', 'N', ' ' };
-      int frequencyScore = 0;
+      CharacterFrequency expectedFrequencies = new CharacterFrequency();
+      double sum = 0;
+      int validCharLength = input.Length - ignoreCharacterCount;
+      foreach (KeyValuePair<char, int> kvp in frequency)
+      {
+        double expectedFrequency = validCharLength * expectedFrequencies.FrequencyDictionarySpace[kvp.Key];
+        double difference = kvp.Value - expectedFrequency;
+        sum += Math.Pow(difference, 2) / expectedFrequency;
+      }
 
-      List<KeyValuePair<char, int>> TopFive = list.GetRange(0, list.Count >= 5 ? 5 : list.Count);
+      return sum;
+
+      //List<KeyValuePair<char, int>> list = frequency.ToList();
+      //list.Sort((x, y) => y.Value.CompareTo(x.Value));
+
+      //char[] common = { 'E', 'T', 'A', 'O', 'I', 'N', ' ' };
+      //int frequencyScore = 0;
+
+      //List<KeyValuePair<char, int>> TopFive = list.GetRange(0, list.Count >= 5 ? 5 : list.Count);
       
-      foreach (KeyValuePair<char, int> kvp in TopFive)
-        if (common.Contains(kvp.Key))
-        {
-          frequencyScore++;
-          frequencyScore += kvp.Value;
-        }
+      //foreach (KeyValuePair<char, int> kvp in TopFive)
+      //  if (common.Contains(kvp.Key))
+      //  {
+      //    frequencyScore++;
+      //    frequencyScore += kvp.Value;
+      //  }
 
-      return frequencyScore;
+      //return frequencyScore;
     }
+
+
+    /// <summary>
+    /// Finds the potential key sizes in a cipher text
+    /// </summary>
+    /// <param name="cipherText">The encrypted text</param>
+    /// <returns>A list of possible key sizes</returns>
+    private List<KeyValuePair<int, float>> FindKeySize(byte[] cipherText)
+    {
+      HammingDistanceCalculator calc = new HammingDistanceCalculator();
+      Dictionary<int, float> normalizedEntries = new Dictionary<int, float>();
+
+      // Suggested Key size assumption by challenge
+      int MAX_SIZE = 40, MIN_SIZE = 2;
+
+      for (int KEYSIZE = MIN_SIZE; KEYSIZE <= MAX_SIZE; KEYSIZE++)
+      {
+        int blockNum = (int)(cipherText.Length / KEYSIZE);
+        List<float> distances = new List<float>();
+        byte[] firstBuffer = new byte[KEYSIZE], secondBuffer = new byte[KEYSIZE], thirdBuffer = new byte[KEYSIZE], fourthBuffer = new byte[KEYSIZE];
+
+        // Partition Data into buffers
+        Buffer.BlockCopy(cipherText, 0, firstBuffer, 0, KEYSIZE);
+        Buffer.BlockCopy(cipherText, KEYSIZE * 1, secondBuffer, 0, KEYSIZE);
+        Buffer.BlockCopy(cipherText, KEYSIZE * 2, thirdBuffer, 0, KEYSIZE);
+        Buffer.BlockCopy(cipherText, KEYSIZE * 3, fourthBuffer, 0, KEYSIZE);
+
+        // Calculate distances
+        distances.Add(calc.CalculateDistance(firstBuffer, secondBuffer));
+        distances.Add(calc.CalculateDistance(firstBuffer, thirdBuffer));
+        distances.Add(calc.CalculateDistance(firstBuffer, fourthBuffer));
+        distances.Add(calc.CalculateDistance(secondBuffer, thirdBuffer));
+        distances.Add(calc.CalculateDistance(secondBuffer, fourthBuffer));
+        distances.Add(calc.CalculateDistance(thirdBuffer, fourthBuffer));
+
+        float averageNormalized = distances.Sum() / KEYSIZE;
+        normalizedEntries.Add(KEYSIZE, averageNormalized);
+      }
+
+      List<KeyValuePair<int, float>> list = normalizedEntries.ToList();
+      list.Sort((pair1, pair2) => pair1.Value.CompareTo(pair2.Value));
+
+      // Only save the top 4 entries
+      return list.GetRange(0, 4);
+    }
+
   }
 }
