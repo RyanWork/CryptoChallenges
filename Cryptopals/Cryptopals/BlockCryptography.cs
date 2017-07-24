@@ -21,6 +21,9 @@ namespace Cryptopals
     /// <param name="blockSize">The block size to pad to</param>
     public string AppendPKCS7Padding(string plainText, int blockSize)
     {
+      if (blockSize < 0x01 || blockSize > 0xFF)
+        throw new Exceptions.InvalidPaddingSizeException("Padding size must be between 1 and 255");
+
       // If the text is bigger than the blocksize, pad the end of the string
       string stringToPad = plainText;
       if (plainText.Length > blockSize)

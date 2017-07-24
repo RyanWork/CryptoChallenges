@@ -21,7 +21,7 @@ namespace CryptopalTests
     }
 
     [TestMethod]
-    public void ChallengeOne_AppendPKCS7Padding()
+    public void ChallengeNine_AppendPKCS7Padding()
     {
       string expectedString = "YELLOW SUBMARINE\0x04\0x04\0x04\0x04";
       string result = blockCrypto.AppendPKCS7Padding("YELLOW SUBMARINE", 20);
