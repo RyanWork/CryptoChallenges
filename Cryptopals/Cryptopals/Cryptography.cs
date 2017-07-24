@@ -13,72 +13,6 @@ namespace Cryptopals
   {
     static void Main(string[] args)
     {
-      Cryptography crypto = new Cryptography();
-      HammingDistanceCalculator calc = new HammingDistanceCalculator();
-
-      // TODO: Figure out OpenSSL
-      //Cipher cipher = Cipher.AES_128_ECB
-
-    }
-
-    public enum StringType
-    {
-      Hex,
-      String
-    }
-
-    /// <summary>
-    /// If the text contains duplicate 16-byte blocks, it is possible that it is an 
-    /// ECB encrypted cipher
-    /// </summary>
-    /// <param name="cipher">The cipher's encrypted text</param>
-    /// <returns>A boolean determining if the cipher is an ECB Cipher</returns>
-    public bool DetectECB(byte[] cipher)
-    {
-      // If the cipher block size is not evenly divisible, it cannot be a block cipher
-      if (!(cipher.Length % 16 == 0))
-        return false;
-
-      Dictionary<string, int> duplicateCipher = new Dictionary<string, int>();
-      byte[] temp = new byte[16];
-      for(int i = 0; i * 16 < cipher.Length; i++)
-      {
-        Buffer.BlockCopy(cipher, i * 16, temp, 0, 16);
-        if (!duplicateCipher.ContainsKey(Encoding.ASCII.GetString(temp)))
-          duplicateCipher.Add(Encoding.ASCII.GetString(temp), 0);
-
-        duplicateCipher[Encoding.ASCII.GetString(temp)]++;
-      }
-
-      // If the cipher has any duplicate values
-      return duplicateCipher.Count < (cipher.Length / 16);
-    }
-
-    /// <summary>
-    /// Decrypt cipher text with a given key
-    /// </summary>
-    /// <param name="key">The key in bytes</param>
-    /// <returns>the decrypted text</returns>
-    public string DecryptECBText(byte[] key, byte[] cipherText)
-    {
-      AesCryptoServiceProvider aes = new AesCryptoServiceProvider();
-      aes.Mode = CipherMode.ECB;
-      aes.Key = key;
-
-      ICryptoTransform transform = aes.CreateDecryptor();
-
-      // Decrypt and write to memory
-      using (MemoryStream ms = new MemoryStream())
-      {
-        using (CryptoStream cs = new CryptoStream(ms, transform, CryptoStreamMode.Write))
-        {
-          cs.Write(cipherText, 0, cipherText.Length);
-          cs.FlushFinalBlock();
-        }
-
-        byte[] array = ms.ToArray();
-        return Encoding.ASCII.GetString(array);
-      }
     }
 
     /// <summary>
@@ -87,19 +21,19 @@ namespace Cryptopals
     /// <param name="encryptedString"></param>
     /// <param name="stringType">The type of the string</param>
     /// <returns></returns>
-    public string DecodeSingleByteXOR(string encryptedString, StringType stringType)
+    public string DecodeSingleByteXOR(string encryptedString, StringHelper.StringType stringType)
     {
       byte[] parsedString;
       switch (stringType)
       {
-        case StringType.Hex:
-          parsedString = this.ConvertHexStringToByteArray(encryptedString);
+        case StringHelper.StringType.Hex:
+          parsedString = StringHelper.ConvertHexStringToByteArray(encryptedString);
           break;
-        case StringType.String:
+        case StringHelper.StringType.String:
           parsedString = Encoding.ASCII.GetBytes(encryptedString);
           break;
         default:
-          parsedString = this.ConvertHexStringToByteArray(encryptedString);
+          parsedString = StringHelper.ConvertHexStringToByteArray(encryptedString);
           break;
       }
 
@@ -148,7 +82,7 @@ namespace Cryptopals
     /// </summary>
     /// <param name="filepath">the file path</param>
     /// <returns>The decoded string</returns>
-    public string DecodeSingleByteXORFile(string[] text, StringType stringType)
+    public string DecodeSingleByteXORFile(string[] text, StringHelper.StringType stringType)
     {
       string bestString = string.Empty;
       double bestScore = -1;
@@ -168,36 +102,6 @@ namespace Cryptopals
     }
 
     /// <summary>
-    /// Parses a byte array into a string
-    /// </summary>
-    /// <param name="array">The byte array to convert</param>
-    /// <returns>A string representation of the array</returns>
-    public string JoinArrayToString(byte[] array)
-    {
-      StringBuilder joinedString = new StringBuilder();
-      for (int i = 0; i < array.Length; i++)
-        joinedString.AppendFormat("{0:x2}", array[i]);
-      return joinedString.ToString();
-    }
-
-    /// <summary>
-    /// Converts a hex string into a byte array
-    /// </summary>
-    /// <param name="hexString">The hex string to convert</param>
-    /// <returns>A byte array containing the hex string</returns>
-    public byte[] ConvertHexStringToByteArray(string hexString)
-    {
-      // Convert string to byte array
-      int NumberChars = hexString.Length;
-      byte[] bytes = new byte[NumberChars / 2];
-      for (int i = 0; i < NumberChars; i += 2)
-        bytes[i / 2] = Convert.ToByte(hexString.Substring(i, 2), 16);
-
-      // Return Converted array as a string
-      return bytes;
-    }
-
-    /// <summary>
     /// XORs two hex strings with each other
     /// </summary>
     /// <param name="input">The first string input</param>
@@ -209,8 +113,8 @@ namespace Cryptopals
       if (input.Length != XOR.Length)
         throw new UnequalLengthException("The input string and the XOR string do not have equal lengths");
 
-      byte[] input1 = this.ConvertHexStringToByteArray(input);
-      byte[] input2 = this.ConvertHexStringToByteArray(XOR);
+      byte[] input1 = StringHelper.ConvertHexStringToByteArray(input);
+      byte[] input2 = StringHelper.ConvertHexStringToByteArray(XOR);
 
       return XORBuffer(input1, input2);
     }
@@ -313,7 +217,7 @@ namespace Cryptopals
         }
       }
 
-      // Cipher XOR Key = Plain text
+      // Cipher ⊕ Key = Plain text
       byte[] plainText = this.RepeatingKeyXOR(Encoding.ASCII.GetString(cipherText), keyBest);
       return Encoding.ASCII.GetString(plainText);
     }
