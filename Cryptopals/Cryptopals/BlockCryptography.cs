@@ -15,6 +15,31 @@ namespace Cryptopals
     public readonly int ECB_BLOCKSIZE = 16;
 
     /// <summary>
+    /// Pads the plaintext to the requested blocksize
+    /// </summary>
+    /// <param name="plainText">The plain text to manipulate</param>
+    /// <param name="blockSize">The block size to pad to</param>
+    public string AppendPKCS7Padding(string plainText, int blockSize)
+    {
+      // If the text is bigger than the blocksize, pad the end of the string
+      string stringToPad = plainText;
+      if (plainText.Length > blockSize)
+      {
+        int remainingText = plainText.Length % blockSize;
+        stringToPad = plainText.Substring(plainText.Length - remainingText, remainingText);
+      }
+
+      StringBuilder PaddedString = new StringBuilder();
+      PaddedString.Append(stringToPad);
+      string blockSizeString = String.Format("\0x{0:x2}", blockSize - stringToPad.Length);
+
+      for (int i = 0; i < (blockSize - stringToPad.Length); i++)
+        PaddedString.Append(blockSizeString);
+
+      return PaddedString.ToString();
+    }
+
+    /// <summary>
     /// If the text contains duplicate 16-byte blocks, it is possible that it is an 
     /// ECB encrypted cipher
     /// </summary>
@@ -26,21 +51,21 @@ namespace Cryptopals
       if (!(cipher.Length % this.ECB_BLOCKSIZE == 0))
         return false;
 
-      Dictionary<string, int> duplicateCipher = new Dictionary<string, int>();
-      byte[] temp = new byte[this.ECB_BLOCKSIZE];
+      byte[] tempBuffer = new byte[this.ECB_BLOCKSIZE];
+      List<string> blockList = new List<string>();
 
       // Partition the cipher into blocks
       for (int i = 0; i * this.ECB_BLOCKSIZE < cipher.Length; i++)
       {
-        Buffer.BlockCopy(cipher, i * this.ECB_BLOCKSIZE, temp, 0, this.ECB_BLOCKSIZE);
-        if (!duplicateCipher.ContainsKey(Encoding.ASCII.GetString(temp)))
-          duplicateCipher.Add(Encoding.ASCII.GetString(temp), 0);
-
-        duplicateCipher[Encoding.ASCII.GetString(temp)]++;
+        Buffer.BlockCopy(cipher, i * this.ECB_BLOCKSIZE, tempBuffer, 0, this.ECB_BLOCKSIZE);
+        if (blockList.Contains(Encoding.ASCII.GetString(tempBuffer)))
+          return true;
+        else
+          blockList.Add(Encoding.ASCII.GetString(tempBuffer));
       }
 
-      // If the cipher has any duplicate values
-      return duplicateCipher.Count < (cipher.Length / 16);
+      // Cipher did not contain any duplicates
+      return false;
     }
 
     /// <summary>
