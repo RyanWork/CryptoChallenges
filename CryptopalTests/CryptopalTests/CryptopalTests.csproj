@@ -48,6 +48,11 @@
     <Reference Include="System.Core" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Properties\Resources.Designer.cs">
+      <AutoGen>True</AutoGen>
+      <DesignTime>True</DesignTime>
+      <DependentUpon>Resources.resx</DependentUpon>
+    </Compile>
     <Compile Include="SetOne.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="SetTwo.cs" />
@@ -60,6 +65,25 @@
       <Project>{283eeca2-3049-4763-8170-419ae96393dc}</Project>
       <Name>Cryptopals</Name>
     </ProjectReference>
+  </ItemGroup>
+  <ItemGroup />
+  <ItemGroup>
+    <EmbeddedResource Include="Properties\Resources.resx">
+      <Generator>ResXFileCodeGenerator</Generator>
+      <LastGenOutput>Resources.Designer.cs</LastGenOutput>
+    </EmbeddedResource>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\Challenge4Text.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\Challenge6Text.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\Challenge7Text.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\Challenge8Text.txt" />
   </ItemGroup>
   <Import Project="$(VSToolsPath)\TeamTest\Microsoft.TestTools.targets" Condition="Exists('$(VSToolsPath)\TeamTest\Microsoft.TestTools.targets')" />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
