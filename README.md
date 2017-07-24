@@ -26,3 +26,8 @@ Current Progress
 		+ Data column partitioning - Completed
 		+ Key Finding algorithm - Completed
 		+ Decoding - Completed
+	+ Challenge Seven - Completed
+	+ Challenge Eight - Completed
+	
++ Set Two
+	+ Challenge One - WIP
