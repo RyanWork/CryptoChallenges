@@ -11,22 +11,6 @@ namespace Cryptopals
 {
   public class Cryptography
   {
-
-    /// <summary>
-    /// Relative file path of the challenge four text file
-    /// </summary>
-    public static string CHALLENGE_FOUR_FILE { get; } = Directory.GetParent(Directory.GetCurrentDirectory()).Parent.FullName + @"\Challenge4Text.txt";
-
-    /// <summary>
-    /// Relative file path of challenge six text file
-    /// </summary>
-    public static string CHALLENGE_SIX_FILE { get; } = Directory.GetParent(Directory.GetCurrentDirectory()).Parent.FullName + @"\Challenge6Text.txt";
-
-    /// <summary>
-    /// Relative file path of challenge seven text file
-    /// </summary>
-    public static string CHALLENGE_SEVEN_FILE { get; } = Directory.GetParent(Directory.GetCurrentDirectory()).Parent.FullName + @"\Challenge7Text.txt";
-
     static void Main(string[] args)
     {
       Cryptography crypto = new Cryptography();
@@ -44,17 +28,43 @@ namespace Cryptopals
     }
 
     /// <summary>
+    /// If the text contains duplicate 16-byte blocks, it is possible that it is an 
+    /// ECB encrypted cipher
+    /// </summary>
+    /// <param name="cipher">The cipher's encrypted text</param>
+    /// <returns>A boolean determining if the cipher is an ECB Cipher</returns>
+    public bool DetectECB(byte[] cipher)
+    {
+      // If the cipher block size is not evenly divisible, it cannot be a block cipher
+      if (!(cipher.Length % 16 == 0))
+        return false;
+
+      Dictionary<string, int> duplicateCipher = new Dictionary<string, int>();
+      byte[] temp = new byte[16];
+      for(int i = 0; i * 16 < cipher.Length; i++)
+      {
+        Buffer.BlockCopy(cipher, i * 16, temp, 0, 16);
+        if (!duplicateCipher.ContainsKey(Encoding.ASCII.GetString(temp)))
+          duplicateCipher.Add(Encoding.ASCII.GetString(temp), 0);
+
+        duplicateCipher[Encoding.ASCII.GetString(temp)]++;
+      }
+
+      // If the cipher has any duplicate values
+      return duplicateCipher.Count < (cipher.Length / 16);
+    }
+
+    /// <summary>
     /// Decrypt cipher text with a given key
     /// </summary>
     /// <param name="key">The key in bytes</param>
     /// <returns>the decrypted text</returns>
-    public string DecryptECBText(byte[] key)
+    public string DecryptECBText(byte[] key, byte[] cipherText)
     {
       AesCryptoServiceProvider aes = new AesCryptoServiceProvider();
       aes.Mode = CipherMode.ECB;
       aes.Key = key;
 
-      byte[] bytes = Convert.FromBase64String(File.ReadAllText(Cryptography.CHALLENGE_SEVEN_FILE));
       ICryptoTransform transform = aes.CreateDecryptor();
 
       // Decrypt and write to memory
@@ -62,7 +72,7 @@ namespace Cryptopals
       {
         using (CryptoStream cs = new CryptoStream(ms, transform, CryptoStreamMode.Write))
         {
-          cs.Write(bytes, 0, bytes.Length);
+          cs.Write(cipherText, 0, cipherText.Length);
           cs.FlushFinalBlock();
         }
 
@@ -138,12 +148,11 @@ namespace Cryptopals
     /// </summary>
     /// <param name="filepath">the file path</param>
     /// <returns>The decoded string</returns>
-    public string DecodeSingleByteXORFile(string filepath, StringType stringType)
+    public string DecodeSingleByteXORFile(string[] text, StringType stringType)
     {
-      string[] challengeText = File.ReadAllLines(filepath);
       string bestString = string.Empty;
       double bestScore = -1;
-      foreach (string line in challengeText)
+      foreach (string line in text)
       {
         string ret = this.DecodeSingleByteXOR(line, stringType);
         double retScore = this.GetFrequencyScore(ret);
