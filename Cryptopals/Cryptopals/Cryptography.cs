@@ -5,6 +5,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using OpenSSL.Crypto;
+using System.Security.Cryptography;
 
 namespace Cryptopals
 {
