@@ -61,6 +61,23 @@ namespace CryptopalTests.Properties {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to CRIwqt4+szDbqkNY+I0qbNXPg1XLaCM5etQ5Bt9DRFV/xIN2k8Go7jtArLIy
+        ///P605b071DL8C+FPYSHOXPkMMMFPAKm+Nsu0nCBMQVt9mlluHbVE/yl6VaBCj
+        ///NuOGvHZ9WYvt51uR/lklZZ0ObqD5UaC1rupZwCEK4pIWf6JQ4pTyPjyiPtKX
+        ///g54FNQvbVIHeotUG2kHEvHGS/w2Tt4E42xEwVfi29J3yp0O/TcL7aoRZIcJj
+        ///MV4qxY/uvZLGsjo1/IyhtQp3vY0nSzJjGgaLYXpvRn8TaAcEtH3cqZenBoox
+        ///BH3MxNjD/TVf3NastEWGnqeGp+0D9bQx/3L0+xTf+k2VjBDrV9HPXNELRgPN
+        ///0MlNo79p2gEwWjfTbx2KbF6htgsbGgCMZ6/iCshy3R8/abxkl8eK/VfCGfA6
+        ///bQQkqs91bgsT0RgxXSWzjjvh4eXTSl8xYoMDCGa2opN/b6Q2MdfvW7rEvp5m
+        ///wJOfQFDtkv4M5cFE [rest of string was truncated]&quot;;.
+        /// </summary>
+        internal static string Challenge10Text {
+            get {
+                return ResourceManager.GetString("Challenge10Text", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to 0e3647e8592d35514a081243582536ed3de6734059001e3f535ce6271032
         ///334b041de124f73c18011a50e608097ac308ecee501337ec3e100854201d
         ///40e127f51c10031d0133590b1e490f3514e05a54143d08222c2a4071e351

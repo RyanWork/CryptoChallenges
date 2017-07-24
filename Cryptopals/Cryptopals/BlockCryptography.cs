@@ -12,7 +12,69 @@ namespace Cryptopals
   /// </summary>
   public class BlockCryptography
   {
-    public readonly int ECB_BLOCKSIZE = 16;
+    /// <summary>
+    /// The block size for ECB encryption
+    /// </summary>
+    public readonly int BLOCKSIZE = 16;
+
+    public byte[] EncryptCBC(byte[] IV, byte[] key, string plainText)
+    {
+      Cryptography crypto = new Cryptography();
+
+      // Ensure the text is padded
+      plainText = this.AppendPKCS7Padding(plainText, BLOCKSIZE);
+      byte[] plainTextBytes = Encoding.ASCII.GetBytes(plainText);
+      byte[] encryptedBytes = new byte[plainText.Length * 2];
+      byte[] tempBuffer = new byte[BLOCKSIZE];
+      byte[] XORBuffer = null;
+      for(int i = 0; i < plainText.Length; i++)
+      {
+        // Copy plaintext blocks into a buffer
+        Buffer.BlockCopy(plainTextBytes, i * BLOCKSIZE, tempBuffer, 0, BLOCKSIZE);
+
+        // XOR the plaintext with the last known cipher block
+        if (i == 0)
+          XORBuffer = crypto.XORBuffer(tempBuffer, IV);
+        else
+          XORBuffer = crypto.XORBuffer(tempBuffer, XORBuffer);
+
+        // Store the Cipher into an array
+        Buffer.BlockCopy(this.EncryptECB(key, XORBuffer), 0, encryptedBytes, i * BLOCKSIZE, BLOCKSIZE);
+      }
+
+      return encryptedBytes;
+    }
+
+    public string DecryptCBC(byte[] IV, byte[] key, byte[] cipherText)
+    {
+      Cryptography crypto = new Cryptography();
+
+      byte[] lastKnownCipher;
+      byte[] tempBuffer = new byte[BLOCKSIZE];
+      byte[] plainTextBytes;
+      StringBuilder plainText = new StringBuilder();
+      for(int i = 0; i * BLOCKSIZE < cipherText.Length; i++)
+      {
+        // Copy a block into a buffer
+        Buffer.BlockCopy(cipherText, i * BLOCKSIZE, tempBuffer, 0, BLOCKSIZE);
+
+        // Store this block as the last known cipher
+        lastKnownCipher = tempBuffer;
+
+        // Decrypt the block using the key
+        byte[] decryptedBytes = this.DecryptECB(key, tempBuffer);
+
+        // XOR the buffer to retrieve the plain text
+        if (i == 0)
+          plainTextBytes = crypto.XORBuffer(decryptedBytes, IV);
+        else
+          plainTextBytes = crypto.XORBuffer(decryptedBytes, lastKnownCipher);
+
+        plainText.Append(Encoding.ASCII.GetString(plainTextBytes));
+      }
+
+      return plainText.ToString();
+    }
 
     /// <summary>
     /// Pads the plaintext to the requested blocksize
@@ -34,7 +96,7 @@ namespace Cryptopals
 
       StringBuilder PaddedString = new StringBuilder();
       PaddedString.Append(stringToPad);
-      string blockSizeString = String.Format("\0x{0:x2}", blockSize - stringToPad.Length);
+      string blockSizeString = String.Format("{0}", Convert.ToChar(blockSize - stringToPad.Length));
 
       for (int i = 0; i < (blockSize - stringToPad.Length); i++)
         PaddedString.Append(blockSizeString);
@@ -51,16 +113,16 @@ namespace Cryptopals
     public bool DetectECB(byte[] cipher)
     {
       // If the cipher block size is not evenly divisible, it cannot be a block cipher
-      if (!(cipher.Length % this.ECB_BLOCKSIZE == 0))
+      if (!(cipher.Length % this.BLOCKSIZE == 0))
         return false;
 
-      byte[] tempBuffer = new byte[this.ECB_BLOCKSIZE];
+      byte[] tempBuffer = new byte[this.BLOCKSIZE];
       List<string> blockList = new List<string>();
 
       // Partition the cipher into blocks
-      for (int i = 0; i * this.ECB_BLOCKSIZE < cipher.Length; i++)
+      for (int i = 0; i * this.BLOCKSIZE < cipher.Length; i++)
       {
-        Buffer.BlockCopy(cipher, i * this.ECB_BLOCKSIZE, tempBuffer, 0, this.ECB_BLOCKSIZE);
+        Buffer.BlockCopy(cipher, i * this.BLOCKSIZE, tempBuffer, 0, this.BLOCKSIZE);
         if (blockList.Contains(Encoding.ASCII.GetString(tempBuffer)))
           return true;
         else
@@ -72,14 +134,41 @@ namespace Cryptopals
     }
 
     /// <summary>
+    /// Encrypts plain text using ECB Mode cipher
+    /// </summary>
+    /// <param name="key">The key to use to encrypt</param>
+    /// <param name="plainText">The text to encrypt</param>
+    /// <returns>The encrypted text as a byte array</returns>
+    public byte[] EncryptECB(byte[] key, byte[] plainText)
+    {
+      AesCryptoServiceProvider aes = new AesCryptoServiceProvider();
+      aes.Mode = CipherMode.ECB;
+      aes.Key = key;
+      ICryptoTransform transform = aes.CreateEncryptor();
+
+      // Decrypt and write to memory
+      using (MemoryStream ms = new MemoryStream())
+      {
+        using (CryptoStream cs = new CryptoStream(ms, transform, CryptoStreamMode.Write))
+        {
+          cs.Write(plainText, 0, plainText.Length);
+          //cs.FlushFinalBlock();
+        }
+
+        return ms.ToArray();
+      }
+    }
+
+    /// <summary>
     /// Decrypt cipher text with a given key
     /// </summary>
     /// <param name="key">The key in bytes</param>
     /// <returns>the decrypted text</returns>
-    public string DecryptECBText(byte[] key, byte[] cipherText)
+    public byte[] DecryptECB(byte[] key, byte[] cipherText)
     {
       AesCryptoServiceProvider aes = new AesCryptoServiceProvider();
       aes.Mode = CipherMode.ECB;
+      aes.Padding = PaddingMode.None;
       aes.Key = key;
 
       ICryptoTransform transform = aes.CreateDecryptor();
@@ -90,11 +179,10 @@ namespace Cryptopals
         using (CryptoStream cs = new CryptoStream(ms, transform, CryptoStreamMode.Write))
         {
           cs.Write(cipherText, 0, cipherText.Length);
-          cs.FlushFinalBlock();
+          //cs.FlushFinalBlock();
         }
 
-        byte[] array = ms.ToArray();
-        return Encoding.ASCII.GetString(array);
+        return ms.ToArray();
       }
     }
   }
