@@ -68,15 +68,38 @@ namespace Cryptopals
         if (i == 0)
           plainTextBytes = crypto.XORBuffer(decryptedBytes, IV);
         else
-          // Store this block as the last known cipher
           plainTextBytes = crypto.XORBuffer(decryptedBytes, lastKnownCipher);
 
+        // Store this block as the last known cipher
         lastKnownCipher = tempBuffer;
         Buffer.BlockCopy(plainTextBytes, 0, plainText, i * this.BLOCKSIZE, this.BLOCKSIZE);
       }
 
       plainText = this.RemovePKCS7Padding(plainText);
       return Encoding.ASCII.GetString(plainText);
+    }
+
+    public byte[] AppendPKCS7Padding(byte[] plainText, int blockSize)
+    {
+      if (blockSize < 0x01 || blockSize > 0xFF)
+        throw new Exceptions.InvalidPaddingSizeException("Padding size must be between 1 and 255");
+
+      // If the text is bigger than the blocksize, pad the end of the string
+      byte[] textToPad = plainText;
+      int remainingText = 0;
+      if (plainText.Length > blockSize)
+      {
+        remainingText = plainText.Length % blockSize;
+        textToPad = plainText.Skip(plainText.Length - remainingText).ToArray();
+      }
+
+      byte paddingVal = (byte)(blockSize - textToPad.Length);
+      byte[] paddedText = new byte[blockSize - remainingText];
+      for (int i = 0; i < paddedText.Length; i++)
+        paddedText[i] = paddingVal;
+
+      Buffer.BlockCopy(plainText, 0, paddedText, 0, plainText.Length);
+      return paddedText;
     }
 
     /// <summary>
@@ -86,25 +109,8 @@ namespace Cryptopals
     /// <param name="blockSize">The block size to pad to</param>
     public string AppendPKCS7Padding(string plainText, int blockSize)
     {
-      if (blockSize < 0x01 || blockSize > 0xFF)
-        throw new Exceptions.InvalidPaddingSizeException("Padding size must be between 1 and 255");
-
-      // If the text is bigger than the blocksize, pad the end of the string
-      string stringToPad = plainText;
-      if (plainText.Length > blockSize)
-      {
-        int remainingText = plainText.Length % blockSize;
-        stringToPad = plainText.Substring(plainText.Length - remainingText, remainingText);
-      }
-
-      StringBuilder PaddedString = new StringBuilder();
-      PaddedString.Append(stringToPad);
-      string blockSizeString = String.Format("{0}", Convert.ToChar(blockSize - stringToPad.Length));
-
-      for (int i = 0; i < (blockSize - stringToPad.Length); i++)
-        PaddedString.Append(blockSizeString);
-
-      return PaddedString.ToString();
+      byte[] paddedBytes = this.AppendPKCS7Padding(Encoding.ASCII.GetBytes(plainText), blockSize);
+      return Encoding.ASCII.GetString(paddedBytes);
     }
 
     /// <summary>
@@ -177,7 +183,9 @@ namespace Cryptopals
       AesCryptoServiceProvider aes = new AesCryptoServiceProvider();
       aes.Mode = CipherMode.ECB;
       aes.Key = key;
+      aes.Padding = PaddingMode.None;
       ICryptoTransform transform = aes.CreateEncryptor();
+      plainText = this.AppendPKCS7Padding(plainText, this.BLOCKSIZE);
 
       // Decrypt and write to memory
       using (MemoryStream ms = new MemoryStream())
@@ -185,7 +193,6 @@ namespace Cryptopals
         using (CryptoStream cs = new CryptoStream(ms, transform, CryptoStreamMode.Write))
         {
           cs.Write(plainText, 0, plainText.Length);
-          //cs.FlushFinalBlock();
         }
 
         return ms.ToArray();
@@ -212,7 +219,6 @@ namespace Cryptopals
         using (CryptoStream cs = new CryptoStream(ms, transform, CryptoStreamMode.Write))
         {
           cs.Write(cipherText, 0, cipherText.Length);
-          //cs.FlushFinalBlock();
         }
 
         return ms.ToArray();
