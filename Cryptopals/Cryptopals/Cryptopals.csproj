@@ -50,11 +50,11 @@
     <Compile Include="BlockCryptography.cs" />
     <Compile Include="CharacterFrequency.cs" />
     <Compile Include="Cryptography.cs" />
-    <Compile Include="Exceptions\InvalidPaddingSizeException.cs" />
-    <Compile Include="Exceptions\UnequalLengthException.cs" />
-    <Compile Include="HammingDistanceCalculator.cs" />
+    <Compile Include="Exception Classes\InvalidPaddingSizeException.cs" />
+    <Compile Include="Exception Classes\UnequalLengthException.cs" />
+    <Compile Include="Static Classes\HammingDistanceCalculator.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="StringHelper.cs" />
+    <Compile Include="Static Classes\StringHelper.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="App.config" />
