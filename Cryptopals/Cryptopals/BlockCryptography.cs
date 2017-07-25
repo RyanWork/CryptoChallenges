@@ -12,6 +12,13 @@ namespace Cryptopals
   /// </summary>
   public class BlockCryptography
   {
+    public enum EncryptionMode
+    {
+      None,
+      ECB,
+      CBC
+    }
+
     /// <summary>
     /// The block size for ECB encryption
     /// </summary>
@@ -24,13 +31,13 @@ namespace Cryptopals
     /// <param name="key">The key to encrypt with</param>
     /// <param name="plainText">The plain text to encrypt</param>
     /// <returns></returns>
-    public byte[] EncryptCBC(byte[] IV, byte[] key, string plainText)
+    public byte[] EncryptCBC(byte[] IV, byte[] key, byte[] plainText)
     {
       Cryptography crypto = new Cryptography();
 
       // Ensure the text is padded
       plainText = this.AppendPKCS7Padding(plainText, this.BLOCKSIZE);
-      byte[] plainTextBytes = Encoding.ASCII.GetBytes(plainText);
+      byte[] plainTextBytes = plainText;
       byte[] encryptedBytes = new byte[plainText.Length];
       byte[] tempBuffer = new byte[this.BLOCKSIZE];
       byte[] lastKnownCipher = null;
@@ -105,17 +112,22 @@ namespace Cryptopals
       if (blockSize < 0x01 || blockSize > 0xFF)
         throw new Exceptions.InvalidPaddingSizeException("Padding size must be between 1 and 255");
 
+      // Plaintext does not require padding
+      if (plainText.Length % blockSize == 0)
+        return plainText;
+
       // If the text is bigger than the blocksize, pad the end of the string
       byte[] textToPad = plainText;
       int remainingText = 0;
       if (plainText.Length > blockSize)
       {
+        int numBlocks = plainText.Length / blockSize;
         remainingText = plainText.Length % blockSize;
-        textToPad = plainText.Skip(plainText.Length - remainingText).ToArray();
+        textToPad = plainText.Skip(numBlocks * blockSize).ToArray();
       }
 
       byte paddingVal = (byte)(blockSize - textToPad.Length);
-      byte[] paddedText = new byte[blockSize - remainingText];
+      byte[] paddedText = new byte[blockSize + plainText.Length - textToPad.Length];
       for (int i = 0; i < paddedText.Length; i++)
         paddedText[i] = paddingVal;
 
@@ -193,6 +205,14 @@ namespace Cryptopals
       return false;
     }
 
+    public EncryptionMode DetectEncryptionType(byte[] cipher)
+    {
+      if (this.DetectECB(cipher))
+        return EncryptionMode.ECB;
+      else
+        return EncryptionMode.CBC;
+    }
+
     /// <summary>
     /// Encrypts plain text using ECB Mode cipher
     /// </summary>
@@ -243,6 +263,71 @@ namespace Cryptopals
         }
 
         return ms.ToArray();
+      }
+    }
+
+    /// <summary>
+    /// Encrypts plaintext with a "random" cipher
+    /// </summary>
+    /// <param name="plainText">Plaintext to encrypt</param>
+    /// <param name="mode">OUT: the type of encryption used (Used for testing/comparison purposes). Remove this parameter normally.</param>
+    /// <returns>The cipher text as a byte array</returns>
+    public byte[] Encryption_Oracle(string plainText, out EncryptionMode mode)
+    {
+      Random encType = new Random();
+      mode = (EncryptionMode)encType.Next(1, 3);
+      byte[] cipherText = null;
+
+      byte[] plainTextBytes = this.AppendRandomBytes(Encoding.ASCII.GetBytes(plainText));
+      byte[] key = this.GenerateRandomHash("Make a key!");
+      switch (mode)
+      {
+        case EncryptionMode.ECB:
+          cipherText = this.EncryptECB(key, plainTextBytes);
+          break;
+        case EncryptionMode.CBC:
+          byte[] IV = this.GenerateRandomHash("Create me a random IV!");
+          cipherText = this.EncryptCBC(IV, key, plainTextBytes);
+          break;
+      }
+
+      return cipherText;
+    }
+
+    /// <summary>
+    /// Appends "random" bytes to the front and end of text
+    /// </summary>
+    /// <returns>The new byte array with the appended bytes</returns>
+    private byte[] AppendRandomBytes(byte[] plainText)
+    {
+      Random bytesToAppend = new Random();
+      int beforeBytes = bytesToAppend.Next(5, 11);
+      int afterBytes = bytesToAppend.Next(5, 11);
+
+      // Fill the new array with random bytes
+      byte[] appendedPlainText = new byte[beforeBytes + plainText.Length + afterBytes];
+      bytesToAppend.NextBytes(appendedPlainText);
+
+      // Place the original plain text back
+      Buffer.BlockCopy(plainText, 0, appendedPlainText, beforeBytes, plainText.Length);
+
+      return appendedPlainText;
+    }
+
+    /// <summary>
+    /// Generates a random hashed value to use
+    /// </summary>
+    /// <param name="userDefinedValue">User Parameter for key</param>
+    /// <returns>A byte array of the key</returns>
+    private byte[] GenerateRandomHash(string userDefinedValue)
+    {
+      // Use the user defined value and the time to hash
+      byte[] userBytes = Encoding.ASCII.GetBytes(userDefinedValue + DateTime.Now.ToString());
+      using(HMACSHA256 hash = new HMACSHA256())
+      {
+        // Take the first 16 bytes of the hash as the key
+        byte[] hashValue = hash.ComputeHash(userBytes);
+        return hashValue.Take(16).ToArray();
       }
     }
   }

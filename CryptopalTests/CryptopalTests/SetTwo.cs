@@ -52,7 +52,6 @@ namespace CryptopalTests
       string text = Properties.Resources.Challenge10Text.Replace(System.Environment.NewLine, string.Empty);
       byte[] textBytesHex = Convert.FromBase64String(text);
       string result = blockCrypto.DecryptCBC(IV, key, textBytesHex);
-      //string result = blockCrypto.DecryptCBC(IV, key, Encoding.ASCII.GetBytes("CRIwqt4+szDbqkNY+I0qbNXPg1XLaCM5etQ5Bt9DRFV/xIN2k8Go7jtArLIy"));
 
       Assert.AreEqual(expectedString, result);
     }
@@ -62,10 +61,22 @@ namespace CryptopalTests
     {
       byte[] key = Encoding.ASCII.GetBytes("YELLOW SUBMARINE");
       byte[] IV = Encoding.ASCII.GetBytes("\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000");
-      byte[] encryptedBytes = blockCrypto.EncryptCBC(IV, key, "Hello World!");
+      byte[] encryptedBytes = blockCrypto.EncryptCBC(IV, key, Encoding.ASCII.GetBytes("Hello World!"));
       string decryptedText = blockCrypto.DecryptCBC(IV, key, encryptedBytes);
 
       Assert.AreEqual("Hello World!", decryptedText);
+    }
+
+    [TestMethod]
+    public void ChallengeEleven_EcbCbcDetection()
+    {
+      for (int i = 0; i < 20; i++)
+      {
+        BlockCryptography.EncryptionMode mode = BlockCryptography.EncryptionMode.None;
+        byte[] cipherText = blockCrypto.Encryption_Oracle("Hello World! This is some plain text to encrypt :)" + i, out mode);
+        BlockCryptography.EncryptionMode resultMode = blockCrypto.DetectEncryptionType(cipherText);
+        Assert.AreEqual(mode, resultMode);
+      }
     }
   }
 }
