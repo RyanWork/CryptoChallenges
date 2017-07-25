@@ -30,4 +30,6 @@ Current Progress
 	+ Challenge Eight - Completed
 	
 + Set Two
-	+ Challenge One - WIP
+	+ Challenge Nine - Completed
+	+ Challenge Ten - Completed
+	+ Challenge Eleven - WIP
