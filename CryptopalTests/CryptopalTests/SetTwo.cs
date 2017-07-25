@@ -50,7 +50,8 @@ namespace CryptopalTests
       // Add null 0's (ASCII 0x00 value)
       byte[] IV = Encoding.ASCII.GetBytes("\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000");
       string text = Properties.Resources.Challenge10Text.Replace(System.Environment.NewLine, string.Empty);
-      string result = blockCrypto.DecryptCBC(IV, key, Encoding.ASCII.GetBytes(text));
+      byte[] textBytesHex = Convert.FromBase64String(text);
+      string result = blockCrypto.DecryptCBC(IV, key, textBytesHex);
       //string result = blockCrypto.DecryptCBC(IV, key, Encoding.ASCII.GetBytes("CRIwqt4+szDbqkNY+I0qbNXPg1XLaCM5etQ5Bt9DRFV/xIN2k8Go7jtArLIy"));
 
       Assert.AreEqual(expectedString, result);

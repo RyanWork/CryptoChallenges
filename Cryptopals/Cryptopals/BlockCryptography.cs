@@ -17,6 +17,13 @@ namespace Cryptopals
     /// </summary>
     public readonly int BLOCKSIZE = 16;
 
+    /// <summary>
+    /// Encrypt plain text with AES-CBC
+    /// </summary>
+    /// <param name="IV">The initialization vector</param>
+    /// <param name="key">The key to encrypt with</param>
+    /// <param name="plainText">The plain text to encrypt</param>
+    /// <returns></returns>
     public byte[] EncryptCBC(byte[] IV, byte[] key, string plainText)
     {
       Cryptography crypto = new Cryptography();
@@ -48,6 +55,13 @@ namespace Cryptopals
       return encryptedBytes;
     }
 
+    /// <summary>
+    /// Decrypts a cipher that has been encrypted via AES-CBC
+    /// </summary>
+    /// <param name="IV">The initialization vector</param>
+    /// <param name="key">The key to decrypt with </param>
+    /// <param name="cipherText">The cipher text to decrypt</param>
+    /// <returns></returns>
     public string DecryptCBC(byte[] IV, byte[] key, byte[] cipherText)
     {
       Cryptography crypto = new Cryptography();
@@ -71,7 +85,8 @@ namespace Cryptopals
           plainTextBytes = crypto.XORBuffer(decryptedBytes, lastKnownCipher);
 
         // Store this block as the last known cipher
-        lastKnownCipher = tempBuffer;
+        lastKnownCipher = new byte[tempBuffer.Length];
+        Buffer.BlockCopy(tempBuffer, 0, lastKnownCipher, 0, lastKnownCipher.Length);
         Buffer.BlockCopy(plainTextBytes, 0, plainText, i * this.BLOCKSIZE, this.BLOCKSIZE);
       }
 
@@ -79,6 +94,12 @@ namespace Cryptopals
       return Encoding.ASCII.GetString(plainText);
     }
 
+    /// <summary>
+    /// Appends PKCS7 Padding to plaintext
+    /// </summary>
+    /// <param name="plainText">The plain text in bytes</param>
+    /// <param name="blockSize">The size of the blocks</param>
+    /// <returns></returns>
     public byte[] AppendPKCS7Padding(byte[] plainText, int blockSize)
     {
       if (blockSize < 0x01 || blockSize > 0xFF)
