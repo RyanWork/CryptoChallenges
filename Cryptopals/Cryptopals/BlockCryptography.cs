@@ -27,7 +27,7 @@ namespace Cryptopals
       byte[] encryptedBytes = new byte[plainText.Length * 2];
       byte[] tempBuffer = new byte[BLOCKSIZE];
       byte[] XORBuffer = null;
-      for(int i = 0; i < plainText.Length; i++)
+      for (int i = 0; i < plainText.Length; i++)
       {
         // Copy plaintext blocks into a buffer
         Buffer.BlockCopy(plainTextBytes, i * BLOCKSIZE, tempBuffer, 0, BLOCKSIZE);
@@ -49,17 +49,14 @@ namespace Cryptopals
     {
       Cryptography crypto = new Cryptography();
 
-      byte[] lastKnownCipher;
+      byte[] lastKnownCipher = null;
       byte[] tempBuffer = new byte[BLOCKSIZE];
       byte[] plainTextBytes;
       StringBuilder plainText = new StringBuilder();
-      for(int i = 0; i * BLOCKSIZE < cipherText.Length; i++)
+      for (int i = 0; i * BLOCKSIZE < cipherText.Length; i++)
       {
         // Copy a block into a buffer
         Buffer.BlockCopy(cipherText, i * BLOCKSIZE, tempBuffer, 0, BLOCKSIZE);
-
-        // Store this block as the last known cipher
-        lastKnownCipher = tempBuffer;
 
         // Decrypt the block using the key
         byte[] decryptedBytes = this.DecryptECB(key, tempBuffer);
@@ -68,8 +65,10 @@ namespace Cryptopals
         if (i == 0)
           plainTextBytes = crypto.XORBuffer(decryptedBytes, IV);
         else
+          // Store this block as the last known cipher
           plainTextBytes = crypto.XORBuffer(decryptedBytes, lastKnownCipher);
 
+        lastKnownCipher = tempBuffer;
         plainText.Append(Encoding.ASCII.GetString(plainTextBytes));
       }
 
