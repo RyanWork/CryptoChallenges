@@ -55,5 +55,16 @@ namespace CryptopalTests
 
       Assert.AreEqual(expectedString, result);
     }
+
+    [TestMethod]
+    public void TestEncryptCBC()
+    {
+      byte[] key = Encoding.ASCII.GetBytes("YELLOW SUBMARINE");
+      byte[] IV = Encoding.ASCII.GetBytes("\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000");
+      byte[] encryptedBytes = blockCrypto.EncryptCBC(IV, key, "Hello World!");
+      string decryptedText = blockCrypto.DecryptCBC(IV, key, encryptedBytes);
+
+      Assert.AreEqual("Hello World!", decryptedText);
+    }
   }
 }

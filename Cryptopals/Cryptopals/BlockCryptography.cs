@@ -22,24 +22,27 @@ namespace Cryptopals
       Cryptography crypto = new Cryptography();
 
       // Ensure the text is padded
-      plainText = this.AppendPKCS7Padding(plainText, BLOCKSIZE);
+      plainText = this.AppendPKCS7Padding(plainText, this.BLOCKSIZE);
       byte[] plainTextBytes = Encoding.ASCII.GetBytes(plainText);
-      byte[] encryptedBytes = new byte[plainText.Length * 2];
-      byte[] tempBuffer = new byte[BLOCKSIZE];
+      byte[] encryptedBytes = new byte[plainText.Length];
+      byte[] tempBuffer = new byte[this.BLOCKSIZE];
+      byte[] lastKnownCipher = null;
       byte[] XORBuffer = null;
-      for (int i = 0; i < plainText.Length; i++)
+      for (int i = 0; i * this.BLOCKSIZE < plainText.Length; i++)
       {
         // Copy plaintext blocks into a buffer
-        Buffer.BlockCopy(plainTextBytes, i * BLOCKSIZE, tempBuffer, 0, BLOCKSIZE);
+        Buffer.BlockCopy(plainTextBytes, i * this.BLOCKSIZE, tempBuffer, 0, this.BLOCKSIZE);
 
         // XOR the plaintext with the last known cipher block
         if (i == 0)
           XORBuffer = crypto.XORBuffer(tempBuffer, IV);
         else
-          XORBuffer = crypto.XORBuffer(tempBuffer, XORBuffer);
+          XORBuffer = crypto.XORBuffer(tempBuffer, lastKnownCipher);
+
+        lastKnownCipher = this.EncryptECB(key, XORBuffer);
 
         // Store the Cipher into an array
-        Buffer.BlockCopy(this.EncryptECB(key, XORBuffer), 0, encryptedBytes, i * BLOCKSIZE, BLOCKSIZE);
+        Buffer.BlockCopy(lastKnownCipher, 0, encryptedBytes, i * this.BLOCKSIZE, this.BLOCKSIZE);
       }
 
       return encryptedBytes;
@@ -50,13 +53,13 @@ namespace Cryptopals
       Cryptography crypto = new Cryptography();
 
       byte[] lastKnownCipher = null;
-      byte[] tempBuffer = new byte[BLOCKSIZE];
+      byte[] tempBuffer = new byte[this.BLOCKSIZE];
       byte[] plainTextBytes;
-      StringBuilder plainText = new StringBuilder();
-      for (int i = 0; i * BLOCKSIZE < cipherText.Length; i++)
+      byte[] plainText = new byte[cipherText.Length];
+      for (int i = 0; i * this.BLOCKSIZE < cipherText.Length; i++)
       {
         // Copy a block into a buffer
-        Buffer.BlockCopy(cipherText, i * BLOCKSIZE, tempBuffer, 0, BLOCKSIZE);
+        Buffer.BlockCopy(cipherText, i * this.BLOCKSIZE, tempBuffer, 0, this.BLOCKSIZE);
 
         // Decrypt the block using the key
         byte[] decryptedBytes = this.DecryptECB(key, tempBuffer);
@@ -69,10 +72,11 @@ namespace Cryptopals
           plainTextBytes = crypto.XORBuffer(decryptedBytes, lastKnownCipher);
 
         lastKnownCipher = tempBuffer;
-        plainText.Append(Encoding.ASCII.GetString(plainTextBytes));
+        Buffer.BlockCopy(plainTextBytes, 0, plainText, i * this.BLOCKSIZE, this.BLOCKSIZE);
       }
 
-      return plainText.ToString();
+      plainText = this.RemovePKCS7Padding(plainText);
+      return Encoding.ASCII.GetString(plainText);
     }
 
     /// <summary>
@@ -101,6 +105,36 @@ namespace Cryptopals
         PaddedString.Append(blockSizeString);
 
       return PaddedString.ToString();
+    }
+
+    /// <summary>
+    /// Removes the PKCS7 Padding
+    /// </summary>
+    /// <param name="plainText">The plain text bytes to check for padding</param>
+    /// <returns>A byte array of the edited plaintext</returns>
+    public byte[] RemovePKCS7Padding(byte[] plainText)
+    {
+      byte paddingVal = plainText[plainText.Length - 1];
+
+      // Check if byte at the end is > the valid blocksize - 1 (implies the last byte must be data, not padding)
+      if (paddingVal < 0 || paddingVal >= (this.BLOCKSIZE - 1))
+        return plainText;
+
+      // Skip to [end of array] - [padding length]
+      byte[] padding = plainText.Skip(plainText.Length - paddingVal).ToArray();
+
+      // Check to see if all the bytes are equal at the "padding"
+      if (padding.All(x => x == paddingVal))
+      {
+        // All values at the padding must be equal (valid padding), remove
+        return plainText.Take(plainText.Length - paddingVal).ToArray();
+      }
+      else
+      {
+        // The values were not all equal, byte must be part of plain text
+        // Return the entire byte array
+        return plainText;
+      }
     }
 
     /// <summary>
