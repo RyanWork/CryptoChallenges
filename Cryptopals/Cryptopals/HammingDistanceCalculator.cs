@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace Cryptopals
 {
-  public class HammingDistanceCalculator
+  public static class HammingDistanceCalculator
   {
     /// <summary>
     /// Calculates the Hamming distance between two byte arrays
@@ -14,7 +14,7 @@ namespace Cryptopals
     /// <param name="originalText">First text input</param>
     /// <param name="newText">The text to change to</param>
     /// <returns>An integer calculation representing the hamming distance</returns>
-    public float CalculateDistance(byte[] originalText, byte[] newText)
+    public static float CalculateDistance(byte[] originalText, byte[] newText)
     {
       if (originalText.Length != newText.Length)
         throw new Exceptions.UnequalLengthException();

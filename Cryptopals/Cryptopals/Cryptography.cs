@@ -322,7 +322,6 @@ namespace Cryptopals
     /// <returns>A list of possible key sizes</returns>
     private List<KeyValuePair<int, float>> FindKeySize(byte[] cipherText)
     {
-      HammingDistanceCalculator calc = new HammingDistanceCalculator();
       Dictionary<int, float> normalizedEntries = new Dictionary<int, float>();
 
       // Suggested Key size assumption by challenge
@@ -341,12 +340,12 @@ namespace Cryptopals
         Buffer.BlockCopy(cipherText, KEYSIZE * 3, fourthBuffer, 0, KEYSIZE);
 
         // Calculate distances
-        distances.Add(calc.CalculateDistance(firstBuffer, secondBuffer));
-        distances.Add(calc.CalculateDistance(firstBuffer, thirdBuffer));
-        distances.Add(calc.CalculateDistance(firstBuffer, fourthBuffer));
-        distances.Add(calc.CalculateDistance(secondBuffer, thirdBuffer));
-        distances.Add(calc.CalculateDistance(secondBuffer, fourthBuffer));
-        distances.Add(calc.CalculateDistance(thirdBuffer, fourthBuffer));
+        distances.Add(HammingDistanceCalculator.CalculateDistance(firstBuffer, secondBuffer));
+        distances.Add(HammingDistanceCalculator.CalculateDistance(firstBuffer, thirdBuffer));
+        distances.Add(HammingDistanceCalculator.CalculateDistance(firstBuffer, fourthBuffer));
+        distances.Add(HammingDistanceCalculator.CalculateDistance(secondBuffer, thirdBuffer));
+        distances.Add(HammingDistanceCalculator.CalculateDistance(secondBuffer, fourthBuffer));
+        distances.Add(HammingDistanceCalculator.CalculateDistance(thirdBuffer, fourthBuffer));
 
         float averageNormalized = distances.Sum() / KEYSIZE;
         normalizedEntries.Add(KEYSIZE, averageNormalized);

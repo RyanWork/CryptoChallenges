@@ -109,9 +109,8 @@ namespace CryptopalTests
     [TestMethod]
     public void TestHammingDistance()
     {
-      HammingDistanceCalculator calc = new HammingDistanceCalculator();
       float expectedValue = 37;
-      float result = calc.CalculateDistance(Encoding.ASCII.GetBytes("this is a test"), Encoding.ASCII.GetBytes("wokka wokka!!!"));
+      float result = HammingDistanceCalculator.CalculateDistance(Encoding.ASCII.GetBytes("this is a test"), Encoding.ASCII.GetBytes("wokka wokka!!!"));
 
       Assert.AreEqual(expectedValue, result);
     }
